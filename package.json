@@ -1,0 +1,28 @@
+{
+  "name": "@reactive-redux/async-store",
+  "version": "1.0.3",
+  "description": "Async reactive redux store",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "homepage": "https://github.com/reactive-redux/async-store",
+  "scripts": {
+    "start": "nodemon",
+    "build": "./node_modules/.bin/tsc --project tsconfig.build.json",
+    "npm-publish": "npm run build && npm publish",
+    "test": "./node_modules/.bin/jest"
+  },
+  "author": "Zdravko Tatarski",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jasmine": "^2.8.8",
+    "jasmine-ts": "^0.2.1",
+    "jest": "23.6.0",
+    "ts-jest": "^23.10.2",
+    "nodemon": "^1.18.3",
+    "ts-node": "^7.0.0",
+    "typescript": "^3.0.1"
+  },
+  "dependencies": {
+    "rxjs": "^6.3.3"
+  }
+}
