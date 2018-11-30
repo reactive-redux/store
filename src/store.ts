@@ -1,4 +1,4 @@
-import { Observable, of, combineLatest, ReplaySubject } from 'rxjs';
+import { Observable, of, combineLatest, ReplaySubject, from } from 'rxjs';
 import {
   scan,
   startWith,
@@ -36,7 +36,11 @@ export class AsyncStore<State, ActionsUnion extends Action> {
       switchMap(scanReducer =>
         this.config.actionsSource$.pipe(
           scanReducer,
-          map(state => of(state))
+          map(state =>
+            state instanceof Promise || state instanceof Observable
+              ? from(state)
+              : of(state)
+          )
         )
       ),
       startWith(this.config.initialState$),
