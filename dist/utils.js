@@ -20,6 +20,8 @@ var __spread = (this && this.__spread) || function () {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var rxjs_1 = require("rxjs");
+var operators_1 = require("rxjs/operators");
 exports.compose = function (fns) {
     return fns.reduce(function (f, g) { return function () {
         var args = [];
@@ -29,3 +31,8 @@ exports.compose = function (fns) {
         return f(g.apply(void 0, __spread(args)));
     }; });
 };
+exports.mapToObservable = rxjs_1.pipe(operators_1.map(function (value) {
+    return value instanceof Promise || value instanceof rxjs_1.Observable
+        ? rxjs_1.from(value)
+        : rxjs_1.of(value);
+}));

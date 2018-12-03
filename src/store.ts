@@ -1,4 +1,4 @@
-import { Observable, of, combineLatest, ReplaySubject, from } from 'rxjs';
+import { Observable, of, combineLatest, ReplaySubject } from 'rxjs';
 import {
   scan,
   startWith,
@@ -6,11 +6,15 @@ import {
   takeUntil,
   mergeMap,
   switchMap,
-  map
+  map,
+  take,
+  catchError,
+  concatMap
 } from 'rxjs/operators';
 
 import { reducerFactory } from './reducer.factory';
 import { Action, ActionMap, MetaReducerMap } from './interfaces';
+import { mapToObservable } from './utils';
 
 export class AsyncStore<State, ActionsUnion extends Action> {
   private replayStateSubject$: ReplaySubject<State>;
@@ -28,23 +32,27 @@ export class AsyncStore<State, ActionsUnion extends Action> {
     this.replayStateSubject$ = new ReplaySubject(1);
 
     this.state$ = combineLatest(
-      this.replayStateSubject$,
       this.config.actionReducerMap$,
-      this.config.metaReducerMap$,
-      (replayState, a, m) => scan(reducerFactory(a, m), replayState)
+      this.config.metaReducerMap$
     ).pipe(
+      switchMap(([a, m]) =>
+        this.replayStateSubject$.pipe(
+          take(1),
+          map(state => scan(reducerFactory(a, m), state))
+        )
+      ),
       switchMap(scanReducer =>
         this.config.actionsSource$.pipe(
+          mapToObservable,
+          concatMap(a => a.pipe(catchError(e => of(e)))),
           scanReducer,
-          map(state =>
-            state instanceof Promise || state instanceof Observable
-              ? from(state)
-              : of(state)
-          )
+          mapToObservable
         )
       ),
       startWith(this.config.initialState$),
-      mergeMap(state => state),
+      mergeMap<Observable<State>, State>(state =>
+        state.pipe(catchError(e => of(e)))
+      ),
       takeUntil(this.config.onDestroy$),
       shareReplay(1)
     );
