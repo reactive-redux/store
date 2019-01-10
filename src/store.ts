@@ -13,22 +13,22 @@ import {
 } from 'rxjs/operators';
 
 import { reducerFactory } from './reducer.factory';
-import { Action, ActionMap, MetaReducerMap } from './interfaces';
+import { Action, StoreConfig } from './interfaces';
 import { mapToObservable } from './utils';
+
+/**
+ * Fully async redux-like store based on RxJS observables
+ *
+ *
+ *
+ * @class AsyncStore<State, ActionUnion>
+ */
 
 export class AsyncStore<State, ActionsUnion extends Action> {
   private replayStateSubject$: ReplaySubject<State>;
   public state$: Observable<State>;
 
-  constructor(
-    private config: {
-      initialState$: Observable<State>;
-      actionReducerMap$: Observable<ActionMap<ActionsUnion['type'], State>>;
-      metaReducerMap$: Observable<MetaReducerMap<State>>;
-      actionsSource$: Observable<ActionsUnion>;
-      onDestroy$: Observable<boolean>;
-    }
-  ) {
+  constructor(private config: StoreConfig<State, ActionsUnion>) {
     this.replayStateSubject$ = new ReplaySubject(1);
 
     this.state$ = combineLatest(
@@ -42,7 +42,7 @@ export class AsyncStore<State, ActionsUnion extends Action> {
         )
       ),
       switchMap(scanReducer =>
-        this.config.actionsSource$.pipe(
+        this.config.actionQueue$.pipe(
           mapToObservable,
           concatMap(a => a.pipe(catchError(e => of(e)))),
           scanReducer,

@@ -72,7 +72,7 @@ export function defaultMemoize(
   // tslint:disable-next-line:no-any anything could be the result.
   function memoized(): any {
     if (!lastArguments) {
-      lastResult = projectionFn.apply(null, arguments);
+      lastResult = projectionFn.apply(null, <any>arguments);
       lastArguments = arguments;
       return lastResult;
     }
@@ -81,7 +81,7 @@ export function defaultMemoize(
       return lastResult;
     }
 
-    const newResult = projectionFn.apply(null, arguments);
+    const newResult = projectionFn.apply(null, <any>arguments);
     if (isResultEqual(lastResult, newResult)) {
       return lastResult;
     }
@@ -690,14 +690,3 @@ export function ofType<T extends Action>(
       allowedTypes.some(type => type === action.type)
   );
 }
-
-// export function createSelector<T>(...fns: any[]): T {
-//   return compose<any>(...fns.reverse());
-// }
-
-// export function select(fn: any) {
-//   return pipe(
-//     map(fn),
-//     distinctUntilChanged()
-//   );
-// }
