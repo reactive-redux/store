@@ -1,5 +1,7 @@
 import { Observable } from 'rxjs';
 
+export type StringType = string;
+
 export interface Action {
   type: string;
   payload?: any;
@@ -7,7 +9,8 @@ export interface Action {
 
 export type ReducerFn<State> = (state: State, action: Action) => State;
 
-export type ActionMap<ActionsEnum, State> = {
+export type ActionMap<ActionsEnum extends StringType, State> = {
+  // [K in ActionsEnum]: ReducerFn<State>
   [key: string]: ReducerFn<State>;
 };
 
@@ -21,8 +24,10 @@ export type MetaReducerMap<T> = {
 
 export interface StoreConfig<State, ActionsUnion extends Action> {
   initialState$: Observable<State>;
-  actionReducerMap$: Observable<ActionMap<ActionsUnion['type'], State>>;
-  metaReducerMap$: Observable<MetaReducerMap<State>>;
-  actionQueue$: Observable<ActionsUnion>;
+  actionMap$: Observable<ActionMap<ActionsUnion['type'], State>>;
+  metaMap$: Observable<MetaReducerMap<State>>;
+  actionQ$: Observable<
+    ActionsUnion | Promise<ActionsUnion> | Observable<ActionsUnion>
+  >;
   onDestroy$: Observable<boolean>;
 }

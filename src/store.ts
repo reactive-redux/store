@@ -17,7 +17,7 @@ import { Action, StoreConfig } from './interfaces';
 import { mapToObservable } from './utils';
 
 /**
- * Fully async redux-like store based on RxJS observables
+ * State container based on RxJS observables
  *
  *
  *
@@ -32,8 +32,8 @@ export class AsyncStore<State, ActionsUnion extends Action> {
     this.replayStateSubject$ = new ReplaySubject(1);
 
     this.state$ = combineLatest(
-      this.config.actionReducerMap$,
-      this.config.metaReducerMap$
+      this.config.actionMap$,
+      this.config.metaMap$
     ).pipe(
       switchMap(([a, m]) =>
         this.replayStateSubject$.pipe(
@@ -41,11 +41,11 @@ export class AsyncStore<State, ActionsUnion extends Action> {
           map(state => scan(reducerFactory(a, m), state))
         )
       ),
-      switchMap(scanReducer =>
-        this.config.actionQueue$.pipe(
+      switchMap(reducer =>
+        this.config.actionQ$.pipe(
           mapToObservable,
           concatMap(a => a.pipe(catchError(e => of(e)))),
-          scanReducer,
+          reducer,
           mapToObservable
         )
       ),

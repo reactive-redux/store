@@ -171,12 +171,3 @@ function ofType() {
     });
 }
 exports.ofType = ofType;
-// export function createSelector<T>(...fns: any[]): T {
-//   return compose<any>(...fns.reverse());
-// }
-// export function select(fn: any) {
-//   return pipe(
-//     map(fn),
-//     distinctUntilChanged()
-//   );
-// }
