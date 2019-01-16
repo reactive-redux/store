@@ -13,7 +13,7 @@ import {
 } from 'rxjs/operators';
 
 import { reducerFactory } from './reducer.factory';
-import { Action, StoreConfig } from './interfaces';
+import { Action, ActionMap, MetaReducerMap } from './interfaces';
 import { mapToObservable } from './utils';
 
 /**
@@ -28,7 +28,19 @@ export class AsyncStore<State, ActionsUnion extends Action> {
   private replayStateSubject$: ReplaySubject<State>;
   public state$: Observable<State>;
 
-  constructor(private config: StoreConfig<State, ActionsUnion>) {
+  constructor(
+    private config: {
+      initialState$: Observable<State>;
+      actionMap$: Observable<ActionMap<ActionsUnion['type'], State>>;
+      metaMap$: Observable<MetaReducerMap<State>>;
+      actionQ$: Observable<
+        | ActionsUnion
+        | Promise<ActionsUnion>
+        | Observable<ActionsUnion>
+      >;
+      onDestroy$: Observable<boolean>;
+    }
+  ) {
     this.replayStateSubject$ = new ReplaySubject(1);
 
     this.state$ = combineLatest(

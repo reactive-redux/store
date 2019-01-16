@@ -1,4 +1,3 @@
-import { Observable } from 'rxjs';
 export declare type StringType = string;
 export interface Action {
     type: string;
@@ -12,10 +11,3 @@ export declare type MetaReducerFn<State> = (reducer: ReducerFn<State>) => (state
 export declare type MetaReducerMap<T> = {
     [key: string]: MetaReducerFn<T>;
 };
-export interface StoreConfig<State, ActionsUnion extends Action> {
-    initialState$: Observable<State>;
-    actionMap$: Observable<ActionMap<ActionsUnion['type'], State>>;
-    metaMap$: Observable<MetaReducerMap<State>>;
-    actionQ$: Observable<ActionsUnion | Promise<ActionsUnion> | Observable<ActionsUnion>>;
-    onDestroy$: Observable<boolean>;
-}

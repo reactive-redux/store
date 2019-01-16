@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { Action, StoreConfig } from './interfaces';
+import { Action, ActionMap, MetaReducerMap } from './interfaces';
 /**
  * State container based on RxJS observables
  *
@@ -11,5 +11,11 @@ export declare class AsyncStore<State, ActionsUnion extends Action> {
     private config;
     private replayStateSubject$;
     state$: Observable<State>;
-    constructor(config: StoreConfig<State, ActionsUnion>);
+    constructor(config: {
+        initialState$: Observable<State>;
+        actionMap$: Observable<ActionMap<ActionsUnion['type'], State>>;
+        metaMap$: Observable<MetaReducerMap<State>>;
+        actionQ$: Observable<ActionsUnion | Promise<ActionsUnion> | Observable<ActionsUnion>>;
+        onDestroy$: Observable<boolean>;
+    });
 }
