@@ -4,7 +4,6 @@ import {
   startWith,
   shareReplay,
   takeUntil,
-  mergeMap,
   switchMap,
   map,
   take,
@@ -62,7 +61,7 @@ export class AsyncStore<State, ActionsUnion extends Action> {
         )
       ),
       startWith(this.config.initialState$),
-      mergeMap<Observable<State>, State>(state =>
+      switchMap<Observable<State>, State>(state =>
         state.pipe(catchError(e => of(e)))
       ),
       takeUntil(this.config.onDestroy$),
