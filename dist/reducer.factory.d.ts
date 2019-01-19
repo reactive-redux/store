@@ -1,2 +1,4 @@
 import { ActionMap, MetaReducerMap, Action } from './interfaces';
-export declare function reducerFactory<ActionsUnion extends Action, State>(actionMap: ActionMap<ActionsUnion['type'], State>, metaReducersMap: MetaReducerMap<State>): (state: State, action: ActionsUnion) => State;
+export declare function reducerFactory<State, ActionsUnion extends Action, ActionsEnum extends string>(actionMap: ActionMap<State, ActionsUnion, ActionsEnum> & {
+    [key: string]: any;
+}, metaReducersMap: MetaReducerMap<State, ActionsUnion>): (state: State, action: ActionsUnion) => any;

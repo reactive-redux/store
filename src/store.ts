@@ -1,4 +1,4 @@
-import { Observable, of, combineLatest, ReplaySubject } from 'rxjs';
+import { Observable, of, combineLatest } from 'rxjs';
 import {
   scan,
   startWith,
@@ -6,7 +6,6 @@ import {
   takeUntil,
   switchMap,
   map,
-  take,
   catchError,
   concatMap
 } from 'rxjs/operators';
@@ -20,18 +19,23 @@ import { mapToObservable } from './utils';
  *
  *
  *
- * @class AsyncStore<State, ActionUnion>
+ * @class AsyncStore<State, ActionsUnion>
  */
 
-export class AsyncStore<State, ActionsUnion extends Action> {
-  private replayStateSubject$: ReplaySubject<State>;
+export class AsyncStore<
+  State,
+  ActionsUnion extends Action,
+  ActionsEnum extends string
+> {
   public state$: Observable<State>;
 
   constructor(
     private config: {
       initialState$: Observable<State>;
-      actionMap$: Observable<ActionMap<ActionsUnion['type'], State>>;
-      metaMap$: Observable<MetaReducerMap<State>>;
+      actionMap$: Observable<
+        ActionMap<State, ActionsUnion, ActionsEnum>
+      >;
+      metaMap$: Observable<MetaReducerMap<State, ActionsUnion>>;
       actionQ$: Observable<
         | ActionsUnion
         | Promise<ActionsUnion>
@@ -40,18 +44,12 @@ export class AsyncStore<State, ActionsUnion extends Action> {
       onDestroy$: Observable<boolean>;
     }
   ) {
-    this.replayStateSubject$ = new ReplaySubject(1);
-
     this.state$ = combineLatest(
-      this.config.actionMap$,
-      this.config.metaMap$
+      this.config.initialState$.pipe(catchError(e => of(e))),
+      this.config.actionMap$.pipe(catchError(e => of(e))),
+      this.config.metaMap$.pipe(catchError(e => of(e)))
     ).pipe(
-      switchMap(([a, m]) =>
-        this.replayStateSubject$.pipe(
-          take(1),
-          map(state => scan(reducerFactory(a, m), state))
-        )
-      ),
+      map(([i, a, m]) => scan(reducerFactory(a, m), i)),
       switchMap(reducer =>
         this.config.actionQ$.pipe(
           mapToObservable,
@@ -68,6 +66,6 @@ export class AsyncStore<State, ActionsUnion extends Action> {
       shareReplay(1)
     );
 
-    this.state$.subscribe(this.replayStateSubject$);
+    this.state$.subscribe();
   }
 }

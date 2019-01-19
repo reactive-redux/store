@@ -1,9 +1,20 @@
 import { compose } from './utils';
-import { ActionMap, MetaReducerMap, MetaReducerFn, Action } from './interfaces';
+import {
+  ActionMap,
+  MetaReducerMap,
+  MetaReducerFn,
+  Action
+} from './interfaces';
 
-export function reducerFactory<ActionsUnion extends Action, State>(
-  actionMap: ActionMap<ActionsUnion['type'], State>,
-  metaReducersMap: MetaReducerMap<State>
+export function reducerFactory<
+  State,
+  ActionsUnion extends Action,
+  ActionsEnum extends string
+>(
+  actionMap: ActionMap<State, ActionsUnion, ActionsEnum> & {
+    [key: string]: any; //cleanest way to fix: ..
+  },
+  metaReducersMap: MetaReducerMap<State, ActionsUnion>
 ) {
   const metaReducers = Object.keys(metaReducersMap).map(
     key => metaReducersMap[key]
@@ -13,10 +24,13 @@ export function reducerFactory<ActionsUnion extends Action, State>(
   return (state: State, action: ActionsUnion) => {
     if (!action.type || !actionMap[action.type]) return state;
 
-    const reducerFn = actionMap[action.type] || (state => state);
+    const reducerFn =
+      actionMap[action.type] || ((state: any) => state);
 
     return hasMeta
-      ? compose<MetaReducerFn<State>>(metaReducers)(reducerFn)(state, action)
+      ? compose<MetaReducerFn<State, ActionsUnion>>(metaReducers)(
+          reducerFn
+        )(state, action)
       : reducerFn(state, action);
   };
 }
