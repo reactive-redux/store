@@ -4,19 +4,17 @@
 
 ## Quickstart
 
-#### Install: `npm i @reactive-redux/async-store`
-
-#### [Full Example (stackblitz)](https://stackblitz.com/edit/reactive-async-store?embed=1&file=index.ts)
+#### `npm i @reactive-redux/async-store`
 
 ---
 
 ```typescript
 import { of, Subject } from 'rxjs';
-import { map } from 'rxjs/operators';
 import {
   Action,
   AsyncStore,
-  select
+  select,
+  ActionMap
 } from '@reactive-redux/async-store';
 
 //Counter example
@@ -24,17 +22,17 @@ interface State {
   count: number;
 }
 
-enum Actions {
+enum ActionsEnum {
   INC = '[App] Increment',
   DECR = '[App] Decrement'
 }
 
 class Increment implements Action {
-  readonly type = Actions.INC;
+  readonly type = ActionsEnum.INC;
 }
 
 class Decrement implements Action {
-  readonly type = Actions.DECR;
+  readonly type = ActionsEnum.DECR;
 }
 
 type ActionsUnion = Increment | Decrement;
@@ -44,11 +42,12 @@ const onDestroy = new Subject<boolean>();
 const initialState = {
   count: 0
 };
-const actionMap = {
-  [Actions.INC]: (state: State, action: Increment): State => ({
+
+const actionMap: ActionMap<State, ActionsUnion> = {
+  [ActionsEnum.INC]: (state: State, action: ActionsUnion): State => ({
     count: state.count += 1
   }),
-  [Actions.DECR]: (state: State, action: Decrement): State => ({
+  [ActionsEnum.DECR]: (state: State, action: ActionsUnion): State => ({
     count: state.count -= 1
   })
 };
@@ -63,9 +62,7 @@ const config = {
 
 const store = new AsyncStore<State, ActionsUnion>(config);
 
-store.state$
-  .pipe(select(state => state.count))
-  .subscribe(console.log);
+store.state$.pipe(select(state => state.count)).subscribe(console.log);
 
 actionQ.next(new Increment());
 actionQ.next(new Increment());
@@ -73,11 +70,13 @@ actionQ.next(new Increment());
 actionQ.next(new Decrement());
 ```
 
-#### Counter example: [stackblitz](https://stackblitz.com/edit/reactive-store-counter?file=index.ts)
+#### Counter example: [stackblitz](https://stackblitz.com/edit/async-store-counter)
+
+#### [Full Example (stackblitz)](https://stackblitz.com/edit/async-store-todo)
 
 ## Changelog
 
-#### Current version: 1.2.0
+#### Current version: 1.2.6
 
 ## Want to help?
 

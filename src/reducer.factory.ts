@@ -6,12 +6,8 @@ import {
   Action
 } from './interfaces';
 
-export function reducerFactory<
-  State,
-  ActionsUnion extends Action,
-  ActionsEnum extends string
->(
-  actionMap: ActionMap<State, ActionsUnion, ActionsEnum> & {
+export function reducerFactory<State, ActionsUnion extends Action>(
+  actionMap: ActionMap<State, ActionsUnion> & {
     [key: string]: any; //cleanest way to fix: ..
   },
   metaReducersMap: MetaReducerMap<State, ActionsUnion>
@@ -24,8 +20,7 @@ export function reducerFactory<
   return (state: State, action: ActionsUnion) => {
     if (!action.type || !actionMap[action.type]) return state;
 
-    const reducerFn =
-      actionMap[action.type] || ((state: any) => state);
+    const reducerFn = actionMap[action.type] || ((state: any) => state);
 
     return hasMeta
       ? compose<MetaReducerFn<State, ActionsUnion>>(metaReducers)(

@@ -22,24 +22,16 @@ import { mapToObservable } from './utils';
  * @class AsyncStore<State, ActionsUnion>
  */
 
-export class AsyncStore<
-  State,
-  ActionsUnion extends Action,
-  ActionsEnum extends string
-> {
+export class AsyncStore<State, ActionsUnion extends Action> {
   public state$: Observable<State>;
 
   constructor(
     private config: {
       initialState$: Observable<State>;
-      actionMap$: Observable<
-        ActionMap<State, ActionsUnion, ActionsEnum>
-      >;
+      actionMap$: Observable<ActionMap<State, ActionsUnion>>;
       metaMap$: Observable<MetaReducerMap<State, ActionsUnion>>;
       actionQ$: Observable<
-        | ActionsUnion
-        | Promise<ActionsUnion>
-        | Observable<ActionsUnion>
+        ActionsUnion | Promise<ActionsUnion> | Observable<ActionsUnion>
       >;
       onDestroy$: Observable<boolean>;
     }

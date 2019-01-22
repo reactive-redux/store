@@ -10,11 +10,9 @@ export type ReducerFn<State, ActionsUnion> = (
   action: ActionsUnion
 ) => State | Promise<State> | Observable<State>;
 
-export type ActionMap<
-  State,
-  ActionsUnion,
-  ActionsEnum extends string
-> = { [key in ActionsEnum]: ReducerFn<State, ActionsUnion> };
+export type ActionMap<State, ActionsUnion extends Action> = {
+  [key in ActionsUnion['type']]: ReducerFn<State, ActionsUnion>
+};
 
 export type MetaReducerFn<State, ActionsUnion> = (
   reducer: ReducerFn<State, ActionsUnion>

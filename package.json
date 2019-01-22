@@ -1,6 +1,6 @@
 {
   "name": "@reactive-redux/async-store",
-  "version": "1.2.4",
+  "version": "1.2.6",
   "description": "Async reactive redux store",
   "author": "Zdravko Tatarski",
   "license": "MIT",
