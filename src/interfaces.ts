@@ -11,7 +11,8 @@ export type ReducerFn<State, ActionsUnion> = (
 ) => State | Promise<State> | Observable<State>;
 
 export type ActionMap<State, ActionsUnion extends Action> = {
-  [key in ActionsUnion['type']]: ReducerFn<State, ActionsUnion>
+  // [key in ActionsUnion['type']]: ReducerFn<State, ActionsUnion>,
+  [key: string]: any;
 };
 
 export type MetaReducerFn<State, ActionsUnion> = (
@@ -24,3 +25,10 @@ export type MetaReducerFn<State, ActionsUnion> = (
 export type MetaReducerMap<T, U> = {
   [key: string]: MetaReducerFn<T, U>;
 };
+
+export enum FlattenOps {
+  switchMap = 'switchMap',
+  mergeMap = 'mergeMap',
+  concatMap = 'concatMap',
+  exhaustMap = 'exhaustMap'
+}

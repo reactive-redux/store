@@ -14,7 +14,8 @@ import {
   Action,
   AsyncStore,
   select,
-  ActionMap
+  ActionMap,
+  FlattenOps
 } from '@reactive-redux/async-store';
 
 //Counter example
@@ -43,11 +44,11 @@ const initialState = {
   count: 0
 };
 
-const actionMap: ActionMap<State, ActionsUnion> = {
-  [ActionsEnum.INC]: (state: State, action: ActionsUnion): State => ({
+const actionMap = {
+  [ActionsEnum.INC]: (state: State, action: Increment): State => ({
     count: state.count += 1
   }),
-  [ActionsEnum.DECR]: (state: State, action: ActionsUnion): State => ({
+  [ActionsEnum.DECR]: (state: State, action: Decrement): State => ({
     count: state.count -= 1
   })
 };
@@ -60,7 +61,12 @@ const config = {
   onDestroy$: onDestroy.asObservable()
 };
 
-const store = new AsyncStore<State, ActionsUnion>(config);
+const opts = {
+  actionFop: FlattenOps.concatMap, //Action flattening operator default: concatMap
+  stateFop: FlattenOps.switchMap //State flattening operator default: switchMap
+};
+
+const store = new AsyncStore<State, ActionsUnion>(config, opts);
 
 store.state$.pipe(select(state => state.count)).subscribe(console.log);
 
@@ -76,7 +82,7 @@ actionQ.next(new Decrement());
 
 ## Changelog
 
-#### Current version: 1.2.6
+#### Current version: 1.3.0
 
 ## Want to help?
 

@@ -1,10 +1,5 @@
 import { compose } from './utils';
-import {
-  ActionMap,
-  MetaReducerMap,
-  MetaReducerFn,
-  Action
-} from './interfaces';
+import { ActionMap, MetaReducerMap, Action } from './interfaces';
 
 export function reducerFactory<State, ActionsUnion extends Action>(
   actionMap: ActionMap<State, ActionsUnion> & {
@@ -20,12 +15,10 @@ export function reducerFactory<State, ActionsUnion extends Action>(
   return (state: State, action: ActionsUnion) => {
     if (!action.type || !actionMap[action.type]) return state;
 
-    const reducerFn = actionMap[action.type] || ((state: any) => state);
+    const reducerFn = actionMap[action.type];
 
     return hasMeta
-      ? compose<MetaReducerFn<State, ActionsUnion>>(metaReducers)(
-          reducerFn
-        )(state, action)
+      ? compose(metaReducers)(reducerFn)(state, action)
       : reducerFn(state, action);
   };
 }

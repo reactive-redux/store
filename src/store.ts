@@ -7,11 +7,19 @@ import {
   switchMap,
   map,
   catchError,
-  concatMap
+  concatMap,
+  mergeMap,
+  exhaustMap,
+  filter
 } from 'rxjs/operators';
 
 import { reducerFactory } from './reducer.factory';
-import { Action, ActionMap, MetaReducerMap } from './interfaces';
+import {
+  Action,
+  ActionMap,
+  MetaReducerMap,
+  FlattenOps
+} from './interfaces';
 import { mapToObservable } from './utils';
 
 /**
@@ -25,6 +33,13 @@ import { mapToObservable } from './utils';
 export class AsyncStore<State, ActionsUnion extends Action> {
   public state$: Observable<State>;
 
+  private flattenOp: { [key in FlattenOps]: any } = {
+    switchMap,
+    mergeMap,
+    concatMap,
+    exhaustMap
+  };
+
   constructor(
     private config: {
       initialState$: Observable<State>;
@@ -34,8 +49,19 @@ export class AsyncStore<State, ActionsUnion extends Action> {
         ActionsUnion | Promise<ActionsUnion> | Observable<ActionsUnion>
       >;
       onDestroy$: Observable<boolean>;
+    },
+    private options?: {
+      actionFop?: FlattenOps;
+      stateFop?: FlattenOps;
     }
   ) {
+    const actionFop = this.flattenOp[
+      (this.options && this.options.actionFop) || FlattenOps.concatMap
+    ];
+    const stateFop = this.flattenOp[
+      (this.options && this.options.stateFop) || FlattenOps.switchMap
+    ];
+
     this.state$ = combineLatest(
       this.config.initialState$.pipe(catchError(e => of(e))),
       this.config.actionMap$.pipe(catchError(e => of(e))),
@@ -44,17 +70,20 @@ export class AsyncStore<State, ActionsUnion extends Action> {
       map(([i, a, m]) => scan(reducerFactory(a, m), i)),
       switchMap(reducer =>
         this.config.actionQ$.pipe(
+          filter(a => !!a),
           mapToObservable,
-          concatMap(a => a.pipe(catchError(e => of(e)))),
+          actionFop((a: Observable<ActionsUnion>) =>
+            a.pipe(catchError(e => of(e)))
+          ),
           reducer,
           mapToObservable
         )
       ),
       startWith(this.config.initialState$),
-      switchMap<Observable<State>, State>(state =>
+      stateFop((state: Observable<State>) =>
         state.pipe(catchError(e => of(e)))
       ),
-      takeUntil(this.config.onDestroy$),
+      takeUntil<State>(this.config.onDestroy$),
       shareReplay(1)
     );
 

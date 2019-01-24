@@ -5,6 +5,13 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var rxjs = require('rxjs');
 var operators = require('rxjs/operators');
 
+(function (FlattenOps) {
+    FlattenOps["switchMap"] = "switchMap";
+    FlattenOps["mergeMap"] = "mergeMap";
+    FlattenOps["concatMap"] = "concatMap";
+    FlattenOps["exhaustMap"] = "exhaustMap";
+})(exports.FlattenOps || (exports.FlattenOps = {}));
+
 const compose = (fns) => fns.reduce((f, g) => (...args) => f(g(...args)));
 const mapToObservable = rxjs.pipe(operators.map(value => value instanceof Promise || value instanceof rxjs.Observable
     ? rxjs.from(value)
@@ -16,7 +23,7 @@ function reducerFactory(actionMap, metaReducersMap) {
     return (state, action) => {
         if (!action.type || !actionMap[action.type])
             return state;
-        const reducerFn = actionMap[action.type] || ((state) => state);
+        const reducerFn = actionMap[action.type];
         return hasMeta
             ? compose(metaReducers)(reducerFn)(state, action)
             : reducerFn(state, action);
@@ -31,9 +38,18 @@ function reducerFactory(actionMap, metaReducersMap) {
  * @class AsyncStore<State, ActionsUnion>
  */
 class AsyncStore {
-    constructor(config) {
+    constructor(config, options) {
         this.config = config;
-        this.state$ = rxjs.combineLatest(this.config.initialState$.pipe(operators.catchError(e => rxjs.of(e))), this.config.actionMap$.pipe(operators.catchError(e => rxjs.of(e))), this.config.metaMap$.pipe(operators.catchError(e => rxjs.of(e)))).pipe(operators.map(([i, a, m]) => operators.scan(reducerFactory(a, m), i)), operators.switchMap(reducer => this.config.actionQ$.pipe(mapToObservable, operators.concatMap(a => a.pipe(operators.catchError(e => rxjs.of(e)))), reducer, mapToObservable)), operators.startWith(this.config.initialState$), operators.switchMap(state => state.pipe(operators.catchError(e => rxjs.of(e)))), operators.takeUntil(this.config.onDestroy$), operators.shareReplay(1));
+        this.options = options;
+        this.flattenOp = {
+            switchMap: operators.switchMap,
+            mergeMap: operators.mergeMap,
+            concatMap: operators.concatMap,
+            exhaustMap: operators.exhaustMap
+        };
+        const actionFop = this.flattenOp[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
+        const stateFop = this.flattenOp[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
+        this.state$ = rxjs.combineLatest(this.config.initialState$.pipe(operators.catchError(e => rxjs.of(e))), this.config.actionMap$.pipe(operators.catchError(e => rxjs.of(e))), this.config.metaMap$.pipe(operators.catchError(e => rxjs.of(e)))).pipe(operators.map(([i, a, m]) => operators.scan(reducerFactory(a, m), i)), operators.switchMap(reducer => this.config.actionQ$.pipe(operators.filter(a => !!a), mapToObservable, actionFop((a) => a.pipe(operators.catchError(e => rxjs.of(e)))), reducer, mapToObservable)), operators.startWith(this.config.initialState$), stateFop((state) => state.pipe(operators.catchError(e => rxjs.of(e)))), operators.takeUntil(this.config.onDestroy$), operators.shareReplay(1));
         this.state$.subscribe();
     }
 }

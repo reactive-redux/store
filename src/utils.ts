@@ -1,7 +1,7 @@
 import { pipe, Observable, from, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-export const compose = <T>(fns: any[]): T =>
+export const compose = (fns: any[]) =>
   fns.reduce((f, g) => (...args: any[]) => f(g(...args)));
 
 export const mapToObservable = pipe(
