@@ -15,7 +15,8 @@ import {
   AsyncStore,
   select,
   ActionMap,
-  FlattenOps
+  FlattenOps,
+  ActionMonad
 } from '@reactive-redux/async-store';
 
 //Counter example
@@ -23,17 +24,28 @@ interface State {
   count: number;
 }
 
-enum ActionsEnum {
-  INC = '[App] Increment',
-  DECR = '[App] Decrement'
+class Increment extends ActionMonad<State> {
+  constructor(public payload: number) {
+    super();
+  }
+
+  runWith(s, { payload }: Increment) {
+    return {
+      count: s.count + payload
+    };
+  }
 }
 
-class Increment implements Action {
-  readonly type = ActionsEnum.INC;
-}
+class Decrement extends ActionMonad<State> {
+  constructor(public payload: number) {
+    super();
+  }
 
-class Decrement implements Action {
-  readonly type = ActionsEnum.DECR;
+  runWith(s, { payload }: Decrement) {
+    return {
+      count: s.count - payload
+    };
+  }
 }
 
 type ActionsUnion = Increment | Decrement;
@@ -45,12 +57,8 @@ const initialState = {
 };
 
 const actionMap = {
-  [ActionsEnum.INC]: (state: State, action: Increment): State => ({
-    count: state.count += 1
-  }),
-  [ActionsEnum.DECR]: (state: State, action: Decrement): State => ({
-    count: state.count -= 1
-  })
+  Increment,
+  Decrement
 };
 
 const config = {
@@ -70,19 +78,22 @@ const store = new AsyncStore<State, ActionsUnion>(config, opts);
 
 store.state$.pipe(select(state => state.count)).subscribe(console.log);
 
-actionQ.next(new Increment());
-actionQ.next(new Increment());
-actionQ.next(new Increment());
-actionQ.next(new Decrement());
+const inc1 = new Increment(1);
+const decr2 = new Decrement(2);
+
+actionQ.next(inc1);
+actionQ.next(inc1);
+actionQ.next(inc1);
+actionQ.next(decr2);
 ```
 
-#### Counter example: [stackblitz](https://stackblitz.com/edit/async-store-counter)
+<!-- #### Counter example: [stackblitz](https://stackblitz.com/edit/async-store-counter) -->
 
-#### [Full Example (stackblitz)](https://stackblitz.com/edit/async-store-todo)
+<!-- #### [Full Example (stackblitz)](https://stackblitz.com/edit/async-store-todo) -->
 
 ## Changelog
 
-#### Current version: 1.3.0
+#### Current version: 2.0.0
 
 ## Want to help?
 

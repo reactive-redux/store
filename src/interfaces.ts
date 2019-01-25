@@ -1,26 +1,26 @@
 import { Observable } from 'rxjs';
+import { ActionMonad } from './action.monad';
+
+export type AsyncType<T> = T | Promise<T> | Observable<T>;
 
 export interface Action {
   type: string;
-  payload?: any;
+  payload?: unknown;
 }
 
 export type ReducerFn<State, ActionsUnion> = (
   state: State,
   action: ActionsUnion
-) => State | Promise<State> | Observable<State>;
+) => AsyncType<State>;
 
-export type ActionMap<State, ActionsUnion extends Action> = {
+export type ActionMap<State, A extends ActionMonad<State>> = {
   // [key in ActionsUnion['type']]: ReducerFn<State, ActionsUnion>,
-  [key: string]: any;
+  [key: string]: A;
 };
 
 export type MetaReducerFn<State, ActionsUnion> = (
   reducer: ReducerFn<State, ActionsUnion>
-) => (
-  state: State | Promise<State> | Observable<State>,
-  action: ActionsUnion
-) => State | Promise<State> | Observable<State>;
+) => ReducerFn<State, ActionsUnion>;
 
 export type MetaReducerMap<T, U> = {
   [key: string]: MetaReducerFn<T, U>;

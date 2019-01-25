@@ -13,6 +13,7 @@ var operators = require('rxjs/operators');
 })(exports.FlattenOps || (exports.FlattenOps = {}));
 
 const compose = (fns) => fns.reduce((f, g) => (...args) => f(g(...args)));
+const catchErr = rxjs.pipe(operators.catchError(e => rxjs.of(e)));
 const mapToObservable = rxjs.pipe(operators.map(value => value instanceof Promise || value instanceof rxjs.Observable
     ? rxjs.from(value)
     : rxjs.of(value)));
@@ -20,10 +21,14 @@ const mapToObservable = rxjs.pipe(operators.map(value => value instanceof Promis
 function reducerFactory(actionMap, metaReducersMap) {
     const metaReducers = Object.keys(metaReducersMap).map(key => metaReducersMap[key]);
     const hasMeta = metaReducers.length > 0;
+    const _actionMap = new Map();
+    Object.keys(actionMap)
+        .map(k => [k, new actionMap[k]().runWith])
+        .forEach(([key, value]) => _actionMap.set(key, value));
     return (state, action) => {
-        if (!action.type || !actionMap[action.type])
+        if (!(action.type && _actionMap.has(action.type)))
             return state;
-        const reducerFn = actionMap[action.type];
+        const reducerFn = _actionMap.get(action.type) || ((state) => state);
         return hasMeta
             ? compose(metaReducers)(reducerFn)(state, action)
             : reducerFn(state, action);
@@ -49,7 +54,7 @@ class AsyncStore {
         };
         const actionFop = this.flattenOp[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
         const stateFop = this.flattenOp[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
-        this.state$ = rxjs.combineLatest(this.config.initialState$.pipe(operators.catchError(e => rxjs.of(e))), this.config.actionMap$.pipe(operators.catchError(e => rxjs.of(e))), this.config.metaMap$.pipe(operators.catchError(e => rxjs.of(e)))).pipe(operators.map(([i, a, m]) => operators.scan(reducerFactory(a, m), i)), operators.switchMap(reducer => this.config.actionQ$.pipe(operators.filter(a => !!a), mapToObservable, actionFop((a) => a.pipe(operators.catchError(e => rxjs.of(e)))), reducer, mapToObservable)), operators.startWith(this.config.initialState$), stateFop((state) => state.pipe(operators.catchError(e => rxjs.of(e)))), operators.takeUntil(this.config.onDestroy$), operators.shareReplay(1));
+        this.state$ = rxjs.combineLatest(this.config.initialState$.pipe(catchErr), this.config.actionMap$.pipe(catchErr), this.config.metaMap$.pipe(catchErr)).pipe(operators.map(([i, a, m]) => operators.scan(reducerFactory(a, m), i)), operators.switchMap(reducer => this.config.actionQ$.pipe(operators.filter(a => !!a), mapToObservable, actionFop((a) => a.pipe(catchErr)), reducer, mapToObservable)), operators.startWith(this.config.initialState$), stateFop((state) => state.pipe(catchErr)), operators.takeUntil(this.config.onDestroy$), operators.shareReplay(1));
         this.state$.subscribe();
     }
 }
@@ -170,7 +175,18 @@ function ofType(...allowedTypes) {
     return operators.filter((action) => allowedTypes.some(type => type === action.type));
 }
 
+class ActionMonad {
+    constructor(payload) {
+        this.payload = payload;
+        this.type = '';
+        Object.defineProperty(this, 'type', {
+            get: () => this.constructor.name
+        });
+    }
+}
+
 exports.createSelector = createSelector;
 exports.ofType = ofType;
 exports.select = select;
 exports.AsyncStore = AsyncStore;
+exports.ActionMonad = ActionMonad;
