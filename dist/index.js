@@ -190,3 +190,6 @@ exports.ofType = ofType;
 exports.select = select;
 exports.AsyncStore = AsyncStore;
 exports.ActionMonad = ActionMonad;
+exports.compose = compose;
+exports.catchErr = catchErr;
+exports.mapToObservable = mapToObservable;

@@ -21,7 +21,6 @@ import {
 } from './interfaces';
 import { mapToObservable, catchErr } from './utils';
 import { ActionMonad } from './action.monad';
-import { select } from './selectors';
 
 /**
  * State container based on RxJS observables
