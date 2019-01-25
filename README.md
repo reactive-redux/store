@@ -2,21 +2,23 @@
 
 # Async reactive state container
 
-## Quickstart
+## Install
 
 #### `npm i @reactive-redux/async-store`
 
----
+## Quickstart
 
 ```typescript
-import { of, Subject } from 'rxjs';
+import { map, take } from 'rxjs/operators';
+import { of, Subject, interval } from 'rxjs';
 import {
   Action,
   AsyncStore,
   select,
   ActionMap,
   FlattenOps,
-  ActionMonad
+  ActionMonad,
+  AsyncType
 } from '@reactive-redux/async-store';
 
 //Counter example
@@ -29,7 +31,7 @@ class Increment extends ActionMonad<State> {
     super();
   }
 
-  runWith(s, { payload }: Increment) {
+  runWith(s: State, { payload }: Increment) {
     return {
       count: s.count + payload
     };
@@ -41,7 +43,7 @@ class Decrement extends ActionMonad<State> {
     super();
   }
 
-  runWith(s, { payload }: Decrement) {
+  runWith(s: State, { payload }: Decrement) {
     return {
       count: s.count - payload
     };
@@ -50,7 +52,7 @@ class Decrement extends ActionMonad<State> {
 
 type ActionsUnion = Increment | Decrement;
 
-const actionQ = new Subject<ActionsUnion>();
+const actionQ = new Subject<AsyncType<ActionsUnion>>();
 const onDestroy = new Subject<boolean>();
 const initialState = {
   count: 0
@@ -85,6 +87,13 @@ actionQ.next(inc1);
 actionQ.next(inc1);
 actionQ.next(inc1);
 actionQ.next(decr2);
+
+const add10times2 = interval(200).pipe(
+  map(() => decr2),
+  take(10)
+);
+
+actionQ.next(add10times2);
 ```
 
 <!-- #### Counter example: [stackblitz](https://stackblitz.com/edit/async-store-counter) -->
@@ -92,8 +101,6 @@ actionQ.next(decr2);
 <!-- #### [Full Example (stackblitz)](https://stackblitz.com/edit/async-store-todo) -->
 
 ## Changelog
-
-#### Current version: 2.0.0
 
 ## Want to help?
 

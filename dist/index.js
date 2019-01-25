@@ -12,23 +12,74 @@ var operators = require('rxjs/operators');
     FlattenOps["exhaustMap"] = "exhaustMap";
 })(exports.FlattenOps || (exports.FlattenOps = {}));
 
-const compose = (fns) => fns.reduce((f, g) => (...args) => f(g(...args)));
-const catchErr = rxjs.pipe(operators.catchError(e => rxjs.of(e)));
-const mapToObservable = rxjs.pipe(operators.map(value => value instanceof Promise || value instanceof rxjs.Observable
-    ? rxjs.from(value)
-    : rxjs.of(value)));
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+
+THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
+MERCHANTABLITY OR NON-INFRINGEMENT.
+
+See the Apache Version 2.0 License for specific language governing permissions
+and limitations under the License.
+***************************************************************************** */
+
+function __read(o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+}
+
+function __spread() {
+    for (var ar = [], i = 0; i < arguments.length; i++)
+        ar = ar.concat(__read(arguments[i]));
+    return ar;
+}
+
+var compose = function (fns) {
+    return fns.reduce(function (f, g) { return function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        return f(g.apply(void 0, __spread(args)));
+    }; });
+};
+var catchErr = rxjs.pipe(operators.catchError(function (e) { return rxjs.of(e); }));
+var mapToObservable = rxjs.pipe(operators.map(function (value) {
+    return value instanceof Promise || value instanceof rxjs.Observable
+        ? rxjs.from(value)
+        : rxjs.of(value);
+}));
 
 function reducerFactory(actionMap, metaReducersMap) {
-    const metaReducers = Object.keys(metaReducersMap).map(key => metaReducersMap[key]);
-    const hasMeta = metaReducers.length > 0;
-    const _actionMap = new Map();
+    var metaReducers = Object.keys(metaReducersMap).map(function (key) { return metaReducersMap[key]; });
+    var hasMeta = metaReducers.length > 0;
+    var _actionMap = new Map();
     Object.keys(actionMap)
-        .map(k => [k, new actionMap[k]().runWith])
-        .forEach(([key, value]) => _actionMap.set(key, value));
-    return (state, action) => {
+        .map(function (k) { return [k, new actionMap[k]().runWith]; })
+        .forEach(function (_a) {
+        var _b = __read(_a, 2), key = _b[0], value = _b[1];
+        return _actionMap.set(key, value);
+    });
+    return function (state, action) {
         if (!(action.type && _actionMap.has(action.type)))
             return state;
-        const reducerFn = _actionMap.get(action.type) || ((state) => state);
+        var reducerFn = _actionMap.get(action.type) || (function (state) { return state; });
         return hasMeta
             ? compose(metaReducers)(reducerFn)(state, action)
             : reducerFn(state, action);
@@ -42,8 +93,9 @@ function reducerFactory(actionMap, metaReducersMap) {
  *
  * @class AsyncStore<State, ActionsUnion>
  */
-class AsyncStore {
-    constructor(config, options) {
+var AsyncStore = /** @class */ (function () {
+    function AsyncStore(config, options) {
+        var _this = this;
         this.config = config;
         this.options = options;
         this.flattenOp = {
@@ -52,18 +104,24 @@ class AsyncStore {
             concatMap: operators.concatMap,
             exhaustMap: operators.exhaustMap
         };
-        const actionFop = this.flattenOp[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
-        const stateFop = this.flattenOp[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
-        this.state$ = rxjs.combineLatest(this.config.initialState$.pipe(catchErr), this.config.actionMap$.pipe(catchErr), this.config.metaMap$.pipe(catchErr)).pipe(operators.map(([i, a, m]) => operators.scan(reducerFactory(a, m), i)), operators.switchMap(reducer => this.config.actionQ$.pipe(operators.filter(a => !!a), mapToObservable, actionFop((a) => a.pipe(catchErr)), reducer, mapToObservable)), operators.startWith(this.config.initialState$), stateFop((state) => state.pipe(catchErr)), operators.takeUntil(this.config.onDestroy$), operators.shareReplay(1));
+        var actionFop = this.flattenOp[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
+        var stateFop = this.flattenOp[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
+        this.state$ = rxjs.combineLatest(this.config.initialState$.pipe(catchErr), this.config.actionMap$.pipe(catchErr), this.config.metaMap$.pipe(catchErr)).pipe(operators.map(function (_a) {
+            var _b = __read(_a, 3), i = _b[0], a = _b[1], m = _b[2];
+            return operators.scan(reducerFactory(a, m), i);
+        }), operators.switchMap(function (reducer) {
+            return _this.config.actionQ$.pipe(operators.filter(function (a) { return !!a; }), mapToObservable, actionFop(function (a) { return a.pipe(catchErr); }), reducer, mapToObservable);
+        }), operators.startWith(this.config.initialState$), stateFop(function (state) { return state.pipe(catchErr); }), operators.takeUntil(this.config.onDestroy$), operators.shareReplay(1));
         this.state$.subscribe();
     }
-}
+    return AsyncStore;
+}());
 
 function isEqualCheck(a, b) {
     return a === b;
 }
 function isArgumentsChanged(args, lastArguments, comparator) {
-    for (let i = 0; i < args.length; i++) {
+    for (var i = 0; i < args.length; i++) {
         if (!comparator(args[i], lastArguments[i])) {
             return true;
         }
@@ -76,10 +134,12 @@ function isArgumentsChanged(args, lastArguments, comparator) {
 // ) {
 //   return defaultMemoize(projectionFn, isEqualCheck, isResultEqual);
 // }
-function defaultMemoize(projectionFn, isArgumentsEqual = isEqualCheck, isResultEqual = isEqualCheck) {
-    let lastArguments = null;
+function defaultMemoize(projectionFn, isArgumentsEqual, isResultEqual) {
+    if (isArgumentsEqual === void 0) { isArgumentsEqual = isEqualCheck; }
+    if (isResultEqual === void 0) { isResultEqual = isEqualCheck; }
+    var lastArguments = null;
     // tslint:disable-next-line:no-any anything could be the result.
-    let lastResult = null;
+    var lastResult = null;
     function reset() {
         lastArguments = null;
         lastResult = null;
@@ -94,7 +154,7 @@ function defaultMemoize(projectionFn, isArgumentsEqual = isEqualCheck, isResultE
         if (!isArgumentsChanged(arguments, lastArguments, isArgumentsEqual)) {
             return lastResult;
         }
-        const newResult = projectionFn.apply(null, arguments);
+        var newResult = projectionFn.apply(null, arguments);
         if (isResultEqual(lastResult, newResult)) {
             return lastResult;
         }
@@ -102,35 +162,52 @@ function defaultMemoize(projectionFn, isArgumentsEqual = isEqualCheck, isResultE
         lastArguments = arguments;
         return newResult;
     }
-    return { memoized, reset };
+    return { memoized: memoized, reset: reset };
 }
-function createSelector(...input) {
-    return createSelectorFactory(defaultMemoize)(...input);
+function createSelector() {
+    var input = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        input[_i] = arguments[_i];
+    }
+    return createSelectorFactory(defaultMemoize).apply(void 0, __spread(input));
 }
 function defaultStateFn(state, selectors, props, memoizedProjector) {
     if (props === undefined) {
-        const args = selectors.map(fn => fn(state));
-        return memoizedProjector.memoized.apply(null, args);
+        var args_1 = selectors.map(function (fn) { return fn(state); });
+        return memoizedProjector.memoized.apply(null, args_1);
     }
-    const args = selectors.map(fn => fn(state, props));
-    return memoizedProjector.memoized.apply(null, [...args, props]);
+    var args = selectors.map(function (fn) {
+        return fn(state, props);
+    });
+    return memoizedProjector.memoized.apply(null, __spread(args, [props]));
 }
-function createSelectorFactory(memoize, options = {
-    stateFn: defaultStateFn
-}) {
-    return function (...input) {
-        let args = input;
-        if (Array.isArray(args[0])) {
-            const [head, ...tail] = args;
-            args = [...head, ...tail];
+function createSelectorFactory(memoize, options) {
+    if (options === void 0) { options = {
+        stateFn: defaultStateFn
+    }; }
+    return function () {
+        var input = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            input[_i] = arguments[_i];
         }
-        const selectors = args.slice(0, args.length - 1);
-        const projector = args[args.length - 1];
-        const memoizedSelectors = selectors.filter((selector) => selector.release && typeof selector.release === 'function');
-        const memoizedProjector = memoize(function (...selectors) {
+        var args = input;
+        if (Array.isArray(args[0])) {
+            var _a = __read(args), head = _a[0], tail = _a.slice(1);
+            args = __spread(head, tail);
+        }
+        var selectors = args.slice(0, args.length - 1);
+        var projector = args[args.length - 1];
+        var memoizedSelectors = selectors.filter(function (selector) {
+            return selector.release && typeof selector.release === 'function';
+        });
+        var memoizedProjector = memoize(function () {
+            var selectors = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                selectors[_i] = arguments[_i];
+            }
             return projector.apply(null, selectors);
         });
-        const memoizedState = defaultMemoize(function (state, props) {
+        var memoizedState = defaultMemoize(function (state, props) {
             // createSelector works directly on state
             // e.g. createSelector((state, props) => ...)
             if (selectors.length === 0) {
@@ -146,44 +223,56 @@ function createSelectorFactory(memoize, options = {
         function release() {
             memoizedState.reset();
             memoizedProjector.reset();
-            memoizedSelectors.forEach(selector => selector.release());
+            memoizedSelectors.forEach(function (selector) { return selector.release(); });
         }
         return Object.assign(memoizedState.memoized, {
-            release,
+            release: release,
             projector: memoizedProjector.memoized
         });
     };
 }
-function select(pathOrMapFn, propsOrPath, ...paths) {
+function select(pathOrMapFn, propsOrPath) {
+    var paths = [];
+    for (var _i = 2; _i < arguments.length; _i++) {
+        paths[_i - 2] = arguments[_i];
+    }
     return function selectOperator(source$) {
-        let mapped$;
+        var mapped$;
         if (typeof pathOrMapFn === 'string') {
-            const pathSlices = [propsOrPath, ...paths].filter(Boolean);
-            mapped$ = source$.pipe(operators.pluck(pathOrMapFn, ...pathSlices));
+            var pathSlices = __spread([propsOrPath], paths).filter(Boolean);
+            mapped$ = source$.pipe(operators.pluck.apply(void 0, __spread([pathOrMapFn], pathSlices)));
         }
         else if (typeof pathOrMapFn === 'function') {
-            mapped$ = source$.pipe(operators.map(source => pathOrMapFn(source, propsOrPath)));
+            mapped$ = source$.pipe(operators.map(function (source) { return pathOrMapFn(source, propsOrPath); }));
         }
         else {
-            throw new TypeError(`Unexpected type '${typeof pathOrMapFn}' in select operator,` +
-                ` expected 'string' or 'function'`);
+            throw new TypeError("Unexpected type '" + typeof pathOrMapFn + "' in select operator," +
+                " expected 'string' or 'function'");
         }
         return mapped$.pipe(operators.distinctUntilChanged());
     };
 }
-function ofType(...allowedTypes) {
-    return operators.filter((action) => allowedTypes.some(type => type === action.type));
+function ofType() {
+    var allowedTypes = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        allowedTypes[_i] = arguments[_i];
+    }
+    return operators.filter(function (action) {
+        return allowedTypes.some(function (type) { return type === action.type; });
+    });
 }
 
-class ActionMonad {
-    constructor(payload) {
+var ActionMonad = /** @class */ (function () {
+    function ActionMonad(payload) {
+        var _this = this;
         this.payload = payload;
         this.type = '';
         Object.defineProperty(this, 'type', {
-            get: () => this.constructor.name
+            get: function () { return _this.constructor.name; }
         });
     }
-}
+    return ActionMonad;
+}());
 
 exports.createSelector = createSelector;
 exports.ofType = ofType;

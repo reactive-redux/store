@@ -1,5 +1,4 @@
-import { Action } from './interfaces';
-import { Observable } from 'rxjs';
+import { Action, AsyncType } from './interfaces';
 
 export abstract class ActionMonad<State> implements Action {
   readonly type: string = '';
@@ -10,7 +9,7 @@ export abstract class ActionMonad<State> implements Action {
   }
 
   abstract runWith(
-    state: State | Promise<State> | Observable<State>,
+    state: AsyncType<State>,
     action: unknown
-  ): State | Promise<State> | Observable<State>;
+  ): AsyncType<State>;
 }
