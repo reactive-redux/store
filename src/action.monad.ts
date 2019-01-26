@@ -8,8 +8,5 @@ export abstract class ActionMonad<State> implements Action {
     });
   }
 
-  abstract runWith(
-    state: AsyncType<State>,
-    action: unknown
-  ): AsyncType<State>;
+  abstract runWith(state: AsyncType<State>): AsyncType<State>;
 }

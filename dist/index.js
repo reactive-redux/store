@@ -66,23 +66,17 @@ var mapToObservable = rxjs.pipe(operators.map(function (value) {
         : rxjs.of(value);
 }));
 
-function reducerFactory(actionMap, metaReducersMap) {
+function reducerFactory(metaReducersMap) {
     var metaReducers = Object.keys(metaReducersMap).map(function (key) { return metaReducersMap[key]; });
     var hasMeta = metaReducers.length > 0;
-    var _actionMap = new Map();
-    Object.keys(actionMap)
-        .map(function (k) { return [k, new actionMap[k]().runWith]; })
-        .forEach(function (_a) {
-        var _b = __read(_a, 2), key = _b[0], value = _b[1];
-        return _actionMap.set(key, value);
-    });
     return function (state, action) {
-        if (!(action.type && _actionMap.has(action.type)))
+        if (!(action.type &&
+            action.runWith &&
+            typeof action.runWith === 'function'))
             return state;
-        var reducerFn = _actionMap.get(action.type) || (function (state) { return state; });
         return hasMeta
-            ? compose(metaReducers)(reducerFn)(state, action)
-            : reducerFn(state, action);
+            ? compose(metaReducers)(action.runWith)(state)
+            : action.runWith(state);
     };
 }
 
@@ -106,9 +100,9 @@ var AsyncStore = /** @class */ (function () {
         };
         var actionFop = this.flattenOp[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
         var stateFop = this.flattenOp[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
-        this.state$ = rxjs.combineLatest(this.config.initialState$.pipe(catchErr), this.config.actionMap$.pipe(catchErr), this.config.metaMap$.pipe(catchErr)).pipe(operators.map(function (_a) {
-            var _b = __read(_a, 3), i = _b[0], a = _b[1], m = _b[2];
-            return operators.scan(reducerFactory(a, m), i);
+        this.state$ = rxjs.combineLatest(this.config.initialState$.pipe(catchErr), this.config.metaMap$.pipe(catchErr)).pipe(operators.map(function (_a) {
+            var _b = __read(_a, 2), i = _b[0], m = _b[1];
+            return operators.scan(reducerFactory(m), i);
         }), operators.switchMap(function (reducer) {
             return _this.config.actionQ$.pipe(operators.filter(function (a) { return !!a; }), mapToObservable, actionFop(function (a) { return a.pipe(catchErr); }), reducer, mapToObservable);
         }), operators.startWith(this.config.initialState$), stateFop(function (state) { return state.pipe(catchErr); }), operators.takeUntil(this.config.onDestroy$), operators.shareReplay(1));

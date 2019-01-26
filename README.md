@@ -31,9 +31,9 @@ class Increment extends ActionMonad<State> {
     super();
   }
 
-  runWith(s: State, { payload }: Increment) {
+  runWith(s: State) {
     return {
-      count: s.count + payload
+      count: s.count + this.payload
     };
   }
 }
@@ -43,9 +43,9 @@ class Decrement extends ActionMonad<State> {
     super();
   }
 
-  runWith(s: State, { payload }: Decrement) {
+  runWith(s: State) {
     return {
-      count: s.count - payload
+      count: s.count - this.payload
     };
   }
 }
@@ -58,14 +58,8 @@ const initialState = {
   count: 0
 };
 
-const actionMap = {
-  Increment,
-  Decrement
-};
-
 const config = {
   initialState$: of(initialState),
-  actionMap$: of(actionMap),
   metaMap$: of({}),
   actionQ$: actionQ.asObservable(),
   onDestroy$: onDestroy.asObservable()

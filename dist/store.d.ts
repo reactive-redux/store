@@ -1,6 +1,5 @@
 import { Observable } from 'rxjs';
-import { ActionMap, MetaReducerMap, FlattenOps, AsyncType } from './interfaces';
-import { ActionMonad } from './action.monad';
+import { MetaReducerMap, FlattenOps, AsyncType } from './interfaces';
 /**
  * State container based on RxJS observables
  *
@@ -15,7 +14,6 @@ export declare class AsyncStore<State, ActionsUnion> {
     private flattenOp;
     constructor(config: {
         initialState$: Observable<AsyncType<State>>;
-        actionMap$: Observable<ActionMap<State, ActionMonad<State>> | {}>;
         metaMap$: Observable<MetaReducerMap<State, ActionsUnion> | {}>;
         actionQ$: Observable<AsyncType<ActionsUnion>>;
         onDestroy$: Observable<boolean>;

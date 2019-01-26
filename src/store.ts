@@ -13,14 +13,8 @@ import {
 } from 'rxjs/operators';
 
 import { reducerFactory } from './reducer.factory';
-import {
-  ActionMap,
-  MetaReducerMap,
-  FlattenOps,
-  AsyncType
-} from './interfaces';
+import { MetaReducerMap, FlattenOps, AsyncType } from './interfaces';
 import { mapToObservable, catchErr } from './utils';
-import { ActionMonad } from './action.monad';
 
 /**
  * State container based on RxJS observables
@@ -43,7 +37,6 @@ export class AsyncStore<State, ActionsUnion> {
   constructor(
     private config: {
       initialState$: Observable<AsyncType<State>>;
-      actionMap$: Observable<ActionMap<State, ActionMonad<State>> | {}>;
       metaMap$: Observable<MetaReducerMap<State, ActionsUnion> | {}>;
       actionQ$: Observable<AsyncType<ActionsUnion>>;
       onDestroy$: Observable<boolean>;
@@ -62,10 +55,9 @@ export class AsyncStore<State, ActionsUnion> {
 
     this.state$ = combineLatest(
       this.config.initialState$.pipe(catchErr),
-      this.config.actionMap$.pipe(catchErr),
       this.config.metaMap$.pipe(catchErr)
     ).pipe(
-      map(([i, a, m]) => scan(reducerFactory(a, m), i)),
+      map(([i, m]) => scan(reducerFactory(m), i)),
       switchMap(reducer =>
         this.config.actionQ$.pipe(
           filter(a => !!a),
