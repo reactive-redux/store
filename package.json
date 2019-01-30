@@ -1,6 +1,6 @@
 {
   "name": "@reactive-redux/async-store",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Async reactive redux store",
   "author": "Zdravko Tatarski",
   "license": "MIT",
@@ -28,7 +28,7 @@
     "typescript": "3.1.6"
   },
   "dependencies": {
-    "rxjs": "6.3.3"
+    "rxjs": "6.4.0"
   },
   "keywords": [
     "rxjs",

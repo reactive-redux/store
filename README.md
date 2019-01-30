@@ -4,7 +4,7 @@
 
 ## Install
 
-#### `npm i @reactive-redux/async-store rxjs`
+#### `npm i @reactive-redux/async-store`
 
 ## Quickstart
 
@@ -77,9 +77,9 @@ store.state$.pipe(select(state => state.count)).subscribe(console.log);
 const inc10 = new Increment(10);
 const decr2 = new Decrement(2);
 
-actionQ.next(inc1);
-actionQ.next(inc1);
-actionQ.next(inc1);
+actionQ.next(inc10);
+actionQ.next(inc10);
+actionQ.next(inc10);
 actionQ.next(decr2);
 
 const add10times2 = interval(200).pipe(
