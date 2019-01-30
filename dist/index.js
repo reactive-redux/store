@@ -122,12 +122,6 @@ function isArgumentsChanged(args, lastArguments, comparator) {
     }
     return false;
 }
-// function resultMemoize(
-//   projectionFn: AnyFn,
-//   isResultEqual: ComparatorFn
-// ) {
-//   return defaultMemoize(projectionFn, isEqualCheck, isResultEqual);
-// }
 function defaultMemoize(projectionFn, isArgumentsEqual, isResultEqual) {
     if (isArgumentsEqual === void 0) { isArgumentsEqual = isEqualCheck; }
     if (isResultEqual === void 0) { isResultEqual = isEqualCheck; }
@@ -148,12 +142,12 @@ function defaultMemoize(projectionFn, isArgumentsEqual, isResultEqual) {
         if (!isArgumentsChanged(arguments, lastArguments, isArgumentsEqual)) {
             return lastResult;
         }
+        lastArguments = arguments;
         var newResult = projectionFn.apply(null, arguments);
         if (isResultEqual(lastResult, newResult)) {
             return lastResult;
         }
         lastResult = newResult;
-        lastArguments = arguments;
         return newResult;
     }
     return { memoized: memoized, reset: reset };
@@ -204,7 +198,7 @@ function createSelectorFactory(memoize, options) {
         var memoizedState = defaultMemoize(function (state, props) {
             // createSelector works directly on state
             // e.g. createSelector((state, props) => ...)
-            if (selectors.length === 0) {
+            if (selectors.length === 0 && props !== undefined) {
                 return projector.apply(null, [state, props]);
             }
             return options.stateFn.apply(null, [

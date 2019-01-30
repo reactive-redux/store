@@ -35,7 +35,7 @@ export function isEqualCheck(a: any, b: any): boolean {
   return a === b;
 }
 
-export function isArgumentsChanged(
+function isArgumentsChanged(
   args: IArguments,
   lastArguments: IArguments,
   comparator: ComparatorFn
@@ -48,12 +48,12 @@ export function isArgumentsChanged(
   return false;
 }
 
-// function resultMemoize(
-//   projectionFn: AnyFn,
-//   isResultEqual: ComparatorFn
-// ) {
-//   return defaultMemoize(projectionFn, isEqualCheck, isResultEqual);
-// }
+export function resultMemoize(
+  projectionFn: AnyFn,
+  isResultEqual: ComparatorFn
+) {
+  return defaultMemoize(projectionFn, isEqualCheck, isResultEqual);
+}
 
 export function defaultMemoize(
   projectionFn: AnyFn,
@@ -81,13 +81,14 @@ export function defaultMemoize(
       return lastResult;
     }
 
+    lastArguments = arguments;
+
     const newResult = projectionFn.apply(null, <any>arguments);
     if (isResultEqual(lastResult, newResult)) {
       return lastResult;
     }
 
     lastResult = newResult;
-    lastArguments = arguments;
 
     return newResult;
   }
@@ -147,7 +148,11 @@ export function createSelector<State, Props, S1, S2, S3, Result>(
   projector: (s1: S1, s2: S2, s3: S3, props: Props) => Result
 ): MemoizedSelectorWithProps<State, Props, Result>;
 export function createSelector<State, S1, S2, S3, Result>(
-  selectors: [Selector<State, S1>, Selector<State, S2>, Selector<State, S3>],
+  selectors: [
+    Selector<State, S1>,
+    Selector<State, S2>,
+    Selector<State, S3>
+  ],
   projector: (s1: S1, s2: S2, s3: S3) => Result
 ): MemoizedSelector<State, Result>;
 export function createSelector<State, Props, S1, S2, S3, Result>(
@@ -206,7 +211,14 @@ export function createSelector<State, Props, S1, S2, S3, S4, S5, Result>(
   s3: SelectorWithProps<State, Props, S3>,
   s4: SelectorWithProps<State, Props, S4>,
   s5: SelectorWithProps<State, Props, S5>,
-  projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, props: Props) => Result
+  projector: (
+    s1: S1,
+    s2: S2,
+    s3: S3,
+    s4: S4,
+    s5: S5,
+    props: Props
+  ) => Result
 ): MemoizedSelectorWithProps<State, Props, Result>;
 export function createSelector<State, S1, S2, S3, S4, S5, Result>(
   selectors: [
@@ -226,7 +238,14 @@ export function createSelector<State, Props, S1, S2, S3, S4, S5, Result>(
     SelectorWithProps<State, Props, S4>,
     SelectorWithProps<State, Props, S5>
   ],
-  projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, props: Props) => Result
+  projector: (
+    s1: S1,
+    s2: S2,
+    s3: S3,
+    s4: S4,
+    s5: S5,
+    props: Props
+  ) => Result
 ): MemoizedSelectorWithProps<State, Props, Result>;
 
 export function createSelector<State, S1, S2, S3, S4, S5, S6, Result>(
@@ -238,7 +257,17 @@ export function createSelector<State, S1, S2, S3, S4, S5, S6, Result>(
   s6: Selector<State, S6>,
   projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, s6: S6) => Result
 ): MemoizedSelector<State, Result>;
-export function createSelector<State, Props, S1, S2, S3, S4, S5, S6, Result>(
+export function createSelector<
+  State,
+  Props,
+  S1,
+  S2,
+  S3,
+  S4,
+  S5,
+  S6,
+  Result
+>(
   s1: SelectorWithProps<State, Props, S1>,
   s2: SelectorWithProps<State, Props, S2>,
   s3: SelectorWithProps<State, Props, S3>,
@@ -266,7 +295,17 @@ export function createSelector<State, S1, S2, S3, S4, S5, S6, Result>(
   ],
   projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, s6: S6) => Result
 ): MemoizedSelector<State, Result>;
-export function createSelector<State, Props, S1, S2, S3, S4, S5, S6, Result>(
+export function createSelector<
+  State,
+  Props,
+  S1,
+  S2,
+  S3,
+  S4,
+  S5,
+  S6,
+  Result
+>(
   selectors: [
     SelectorWithProps<State, Props, S1>,
     SelectorWithProps<State, Props, S2>,
@@ -294,7 +333,15 @@ export function createSelector<State, S1, S2, S3, S4, S5, S6, S7, Result>(
   s5: Selector<State, S5>,
   s6: Selector<State, S6>,
   s7: Selector<State, S7>,
-  projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, s6: S6, s7: S7) => Result
+  projector: (
+    s1: S1,
+    s2: S2,
+    s3: S3,
+    s4: S4,
+    s5: S5,
+    s6: S6,
+    s7: S7
+  ) => Result
 ): MemoizedSelector<State, Result>;
 export function createSelector<
   State,
@@ -336,7 +383,15 @@ export function createSelector<State, S1, S2, S3, S4, S5, S6, S7, Result>(
     Selector<State, S6>,
     Selector<State, S7>
   ],
-  projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, s6: S6, s7: S7) => Result
+  projector: (
+    s1: S1,
+    s2: S2,
+    s3: S3,
+    s4: S4,
+    s5: S5,
+    s6: S6,
+    s7: S7
+  ) => Result
 ): MemoizedSelector<State, Result>;
 export function createSelector<
   State,
@@ -371,7 +426,18 @@ export function createSelector<
   ) => Result
 ): MemoizedSelectorWithProps<State, Props, Result>;
 
-export function createSelector<State, S1, S2, S3, S4, S5, S6, S7, S8, Result>(
+export function createSelector<
+  State,
+  S1,
+  S2,
+  S3,
+  S4,
+  S5,
+  S6,
+  S7,
+  S8,
+  Result
+>(
   s1: Selector<State, S1>,
   s2: Selector<State, S2>,
   s3: Selector<State, S3>,
@@ -424,7 +490,18 @@ export function createSelector<
     props: Props
   ) => Result
 ): MemoizedSelectorWithProps<State, Props, Result>;
-export function createSelector<State, S1, S2, S3, S4, S5, S6, S7, S8, Result>(
+export function createSelector<
+  State,
+  S1,
+  S2,
+  S3,
+  S4,
+  S5,
+  S6,
+  S7,
+  S8,
+  Result
+>(
   selectors: [
     Selector<State, S1>,
     Selector<State, S2>,
@@ -492,7 +569,7 @@ export function createSelector(
   return createSelectorFactory(defaultMemoize)(...input);
 }
 
-function defaultStateFn(
+export function defaultStateFn(
   state: any,
   selectors: Selector<any, any>[] | SelectorWithProps<any, any, any>[],
   props: any,
@@ -509,7 +586,7 @@ function defaultStateFn(
   return memoizedProjector.memoized.apply(null, [...args, props]);
 }
 
-type SelectorFactoryConfig<T = any, V = any> = {
+export type SelectorFactoryConfig<T = any, V = any> = {
   stateFn: (
     state: T,
     props: any,
@@ -518,21 +595,21 @@ type SelectorFactoryConfig<T = any, V = any> = {
   ) => V;
 };
 
-function createSelectorFactory<T = any, V = any>(
+export function createSelectorFactory<T = any, V = any>(
   memoize: MemoizeFn
 ): (...input: any[]) => Selector<T, V>;
-function createSelectorFactory<T = any, V = any>(
+export function createSelectorFactory<T = any, V = any>(
   memoize: MemoizeFn,
   options: SelectorFactoryConfig<T, V>
 ): (...input: any[]) => Selector<T, V>;
-function createSelectorFactory<T = any, Props = any, V = any>(
+export function createSelectorFactory<T = any, Props = any, V = any>(
   memoize: MemoizeFn
 ): (...input: any[]) => SelectorWithProps<T, Props, V>;
-function createSelectorFactory<T = any, Props = any, V = any>(
+export function createSelectorFactory<T = any, Props = any, V = any>(
   memoize: MemoizeFn,
   options: SelectorFactoryConfig<T, V>
 ): (...input: any[]) => SelectorWithProps<T, Props, V>;
-function createSelectorFactory(
+export function createSelectorFactory(
   memoize: MemoizeFn,
   options: SelectorFactoryConfig<any, any> = {
     stateFn: defaultStateFn
@@ -561,7 +638,7 @@ function createSelectorFactory(
     const memoizedState = defaultMemoize(function(state: any, props: any) {
       // createSelector works directly on state
       // e.g. createSelector((state, props) => ...)
-      if (selectors.length === 0) {
+      if (selectors.length === 0 && props !== undefined) {
         return projector.apply(null, [state, props]);
       }
 
