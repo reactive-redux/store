@@ -61,9 +61,11 @@ var compose = function (fns) {
 };
 var catchErr = rxjs.pipe(operators.catchError(function (e) { return rxjs.of(e); }));
 var mapToObservable = rxjs.pipe(operators.map(function (value) {
-    return value instanceof Promise || value instanceof rxjs.Observable
-        ? rxjs.from(value)
-        : rxjs.of(value);
+    if (rxjs.isObservable(value))
+        return value;
+    if (value instanceof Promise)
+        return rxjs.from(value);
+    return rxjs.of(value);
 }));
 
 function reducerFactory(metaReducersMap) {
