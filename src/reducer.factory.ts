@@ -1,17 +1,17 @@
 import { compose } from './utils';
-import { MetaReducerMap, AsyncType } from './interfaces';
+import { MetaReducerMap } from './interfaces';
 import { ActionMonad } from './action.monad';
 
 export function reducerFactory<
   State,
   ActionsUnion extends ActionMonad<State>
->(metaReducersMap: MetaReducerMap<State, ActionsUnion>) {
-  const metaReducers = Object.keys(metaReducersMap).map(
-    key => metaReducersMap[key]
+>(metaReducerMap: MetaReducerMap<State>) {
+  const metaReducers = Object.keys(metaReducerMap).map(
+    key => metaReducerMap[key]
   );
   const hasMeta = metaReducers.length > 0;
 
-  return (state: AsyncType<State>, action: ActionsUnion) => {
+  return (state: State, action: ActionsUnion) => {
     if (
       !(
         action.type &&

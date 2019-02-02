@@ -1,4 +1,4 @@
-import { Action, AsyncType } from './interfaces';
+import { Action } from './interfaces';
 
 export abstract class ActionMonad<State> implements Action {
   readonly type: string = '';
@@ -8,5 +8,5 @@ export abstract class ActionMonad<State> implements Action {
     });
   }
 
-  abstract runWith(state: AsyncType<State>): AsyncType<State>;
+  abstract runWith(state: State): State;
 }

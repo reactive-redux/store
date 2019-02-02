@@ -1,4 +1,4 @@
-import { Observable, combineLatest } from 'rxjs';
+import { Observable, combineLatest, Subject, of } from 'rxjs';
 import {
   scan,
   startWith,
@@ -24,7 +24,7 @@ import { mapToObservable, catchErr } from './utils';
  * @class AsyncStore<State, ActionsUnion>
  */
 
-export class AsyncStore<State, ActionsUnion> {
+export class AsyncStore<State, ActionsUnion = any> {
   public state$: Observable<State>;
 
   private flattenOp: { [key in FlattenOps]: any } = {
@@ -35,31 +35,65 @@ export class AsyncStore<State, ActionsUnion> {
   };
 
   constructor(
-    private config: {
-      initialState$: Observable<AsyncType<State>>;
-      metaMap$: Observable<MetaReducerMap<State, ActionsUnion> | {}>;
-      actionQ$: Observable<AsyncType<ActionsUnion>>;
-      onDestroy$: Observable<boolean>;
+    private config?: {
+      actions$?: Observable<AsyncType<ActionsUnion>>;
+      initialState$?: Observable<AsyncType<State>>;
+      metaReducers$?: Observable<MetaReducerMap<State>>;
+      onDestroy$?: Observable<boolean>;
     },
     private options?: {
       actionFop?: FlattenOps;
       stateFop?: FlattenOps;
     }
   ) {
+    /**
+     * Config defaults:
+     *    actions$ = of({})
+     *    initialState$ = of({})
+     *    metaReducers$ = of({})
+     *    destroy$ = new Subject() (never destroyed)
+     *
+     * Options defaults:
+     *    actions = concatMap
+     *    state = switchMap
+     */
+    const actions$ =
+      (this.config &&
+        this.config.actions$ &&
+        this.config.actions$.pipe(catchErr)) ||
+      of({});
+
+    const initialState$ =
+      (this.config &&
+        this.config.initialState$ &&
+        this.config.initialState$.pipe(catchErr)) ||
+      of({});
+
+    const metaReducers$ =
+      (this.config &&
+        this.config.metaReducers$ &&
+        this.config.metaReducers$.pipe<MetaReducerMap<State>>(catchErr)) ||
+      of({});
+
+    const destroy$ =
+      (this.config &&
+        this.config.onDestroy$ &&
+        this.config.onDestroy$.pipe(catchErr)) ||
+      new Subject().asObservable();
+
     const actionFop = this.flattenOp[
       (this.options && this.options.actionFop) || FlattenOps.concatMap
     ];
+
     const stateFop = this.flattenOp[
       (this.options && this.options.stateFop) || FlattenOps.switchMap
     ];
 
-    this.state$ = combineLatest(
-      this.config.initialState$.pipe(catchErr),
-      this.config.metaMap$.pipe(catchErr)
-    ).pipe(
+    //State observable
+    this.state$ = combineLatest(initialState$, metaReducers$).pipe(
       map(([i, m]) => scan(reducerFactory(m), i)),
       switchMap(reducer =>
-        this.config.actionQ$.pipe(
+        actions$.pipe(
           filter(a => !!a),
           mapToObservable,
           actionFop((a: Observable<ActionsUnion>) => a.pipe(catchErr)),
@@ -67,9 +101,9 @@ export class AsyncStore<State, ActionsUnion> {
           mapToObservable
         )
       ),
-      startWith(this.config.initialState$),
+      startWith(initialState$),
       stateFop((state: Observable<State>) => state.pipe(catchErr)),
-      takeUntil<State>(this.config.onDestroy$),
+      takeUntil<State>(destroy$),
       shareReplay(1)
     );
 

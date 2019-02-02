@@ -2,8 +2,8 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var rxjs = require('rxjs');
 var operators = require('rxjs/operators');
+var rxjs = require('rxjs');
 
 (function (FlattenOps) {
     FlattenOps["switchMap"] = "switchMap";
@@ -49,69 +49,6 @@ function __spread() {
         ar = ar.concat(__read(arguments[i]));
     return ar;
 }
-
-var compose = function (fns) {
-    return fns.reduce(function (f, g) { return function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        return f(g.apply(void 0, __spread(args)));
-    }; });
-};
-var catchErr = rxjs.pipe(operators.catchError(function (e) { return rxjs.of(e); }));
-var mapToObservable = rxjs.pipe(operators.map(function (value) {
-    if (rxjs.isObservable(value))
-        return value;
-    if (value instanceof Promise)
-        return rxjs.from(value);
-    return rxjs.of(value);
-}));
-
-function reducerFactory(metaReducersMap) {
-    var metaReducers = Object.keys(metaReducersMap).map(function (key) { return metaReducersMap[key]; });
-    var hasMeta = metaReducers.length > 0;
-    return function (state, action) {
-        if (!(action.type &&
-            action.runWith &&
-            typeof action.runWith === 'function'))
-            return state;
-        return hasMeta
-            ? compose(metaReducers)(action.runWith)(state)
-            : action.runWith(state);
-    };
-}
-
-/**
- * State container based on RxJS observables
- *
- *
- *
- * @class AsyncStore<State, ActionsUnion>
- */
-var AsyncStore = /** @class */ (function () {
-    function AsyncStore(config, options) {
-        var _this = this;
-        this.config = config;
-        this.options = options;
-        this.flattenOp = {
-            switchMap: operators.switchMap,
-            mergeMap: operators.mergeMap,
-            concatMap: operators.concatMap,
-            exhaustMap: operators.exhaustMap
-        };
-        var actionFop = this.flattenOp[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
-        var stateFop = this.flattenOp[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
-        this.state$ = rxjs.combineLatest(this.config.initialState$.pipe(catchErr), this.config.metaMap$.pipe(catchErr)).pipe(operators.map(function (_a) {
-            var _b = __read(_a, 2), i = _b[0], m = _b[1];
-            return operators.scan(reducerFactory(m), i);
-        }), operators.switchMap(function (reducer) {
-            return _this.config.actionQ$.pipe(operators.filter(function (a) { return !!a; }), mapToObservable, actionFop(function (a) { return a.pipe(catchErr); }), reducer, mapToObservable);
-        }), operators.startWith(this.config.initialState$), stateFop(function (state) { return state.pipe(catchErr); }), operators.takeUntil(this.config.onDestroy$), operators.shareReplay(1));
-        this.state$.subscribe();
-    }
-    return AsyncStore;
-}());
 
 function isEqualCheck(a, b) {
     return a === b;
@@ -252,6 +189,101 @@ function ofType() {
     });
 }
 
+var compose = function (fns) {
+    return fns.reduceRight(function (f, g) { return function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        return f(g.apply(void 0, __spread(args)));
+    }; });
+};
+var catchErr = rxjs.pipe(operators.catchError(function (e) { return rxjs.of(e); }));
+var mapToObservable = rxjs.pipe(operators.map(function (value) {
+    if (rxjs.isObservable(value))
+        return value;
+    if (value instanceof Promise)
+        return rxjs.from(value);
+    return rxjs.of(value);
+}));
+var mapMeta = function (mapFn) { return function (reducer) { return function (state) { return mapFn(reducer(state)); }; }; };
+var filterMeta = function (predicate) { return function (reducer) { return function (state) {
+    var newState = reducer(state);
+    return predicate(newState) ? newState : state;
+}; }; };
+
+function reducerFactory(metaReducerMap) {
+    var metaReducers = Object.keys(metaReducerMap).map(function (key) { return metaReducerMap[key]; });
+    var hasMeta = metaReducers.length > 0;
+    return function (state, action) {
+        if (!(action.type &&
+            action.runWith &&
+            typeof action.runWith === 'function'))
+            return state;
+        return hasMeta
+            ? compose(metaReducers)(action.runWith)(state)
+            : action.runWith(state);
+    };
+}
+
+/**
+ * State container based on RxJS observables
+ *
+ *
+ *
+ * @class AsyncStore<State, ActionsUnion>
+ */
+var AsyncStore = /** @class */ (function () {
+    function AsyncStore(config, options) {
+        this.config = config;
+        this.options = options;
+        this.flattenOp = {
+            switchMap: operators.switchMap,
+            mergeMap: operators.mergeMap,
+            concatMap: operators.concatMap,
+            exhaustMap: operators.exhaustMap
+        };
+        /**
+         * Config defaults:
+         *    actions$ = of({})
+         *    initialState$ = of({})
+         *    metaReducers$ = of({})
+         *    destroy$ = new Subject() (never destroyed)
+         *
+         * Options defaults:
+         *    actions = concatMap
+         *    state = switchMap
+         */
+        var actions$ = (this.config &&
+            this.config.actions$ &&
+            this.config.actions$.pipe(catchErr)) ||
+            rxjs.of({});
+        var initialState$ = (this.config &&
+            this.config.initialState$ &&
+            this.config.initialState$.pipe(catchErr)) ||
+            rxjs.of({});
+        var metaReducers$ = (this.config &&
+            this.config.metaReducers$ &&
+            this.config.metaReducers$.pipe(catchErr)) ||
+            rxjs.of({});
+        var destroy$ = (this.config &&
+            this.config.onDestroy$ &&
+            this.config.onDestroy$.pipe(catchErr)) ||
+            new rxjs.Subject().asObservable();
+        var actionFop = this.flattenOp[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
+        var stateFop = this.flattenOp[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
+        //State observable
+        this.state$ = rxjs.combineLatest(initialState$, metaReducers$).pipe(operators.map(function (_a) {
+            var _b = __read(_a, 2), i = _b[0], m = _b[1];
+            return operators.scan(reducerFactory(m), i);
+        }), operators.switchMap(function (reducer) {
+            return actions$.pipe(operators.filter(function (a) { return !!a; }), mapToObservable, actionFop(function (a) { return a.pipe(catchErr); }), reducer, mapToObservable);
+        }), operators.startWith(initialState$), stateFop(function (state) { return state.pipe(catchErr); }), operators.takeUntil(destroy$), operators.shareReplay(1));
+        this.state$.subscribe();
+    }
+    return AsyncStore;
+}());
+
 var ActionMonad = /** @class */ (function () {
     function ActionMonad(payload) {
         var _this = this;
@@ -272,3 +304,5 @@ exports.ActionMonad = ActionMonad;
 exports.compose = compose;
 exports.catchErr = catchErr;
 exports.mapToObservable = mapToObservable;
+exports.mapMeta = mapMeta;
+exports.filterMeta = filterMeta;

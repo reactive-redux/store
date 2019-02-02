@@ -1,24 +1,21 @@
 [![npm version](https://badge.fury.io/js/%40reactive-redux%2Fasync-store.svg)](https://badge.fury.io/js/%40reactive-redux%2Fasync-store)
 
-# Async reactive state container
+# Reactive state container
 
 ## Install
 
 #### `npm i @reactive-redux/async-store`
 
-## Quickstart
+## Example
 
 ```typescript
-import { map, take } from 'rxjs/operators';
 import { of, Subject, interval } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 import {
-  Action,
-  AsyncStore,
-  select,
-  ActionMap,
-  FlattenOps,
   ActionMonad,
-  AsyncType
+  AsyncStore,
+  AsyncType,
+  select
 } from '@reactive-redux/async-store';
 
 //Counter example
@@ -53,50 +50,31 @@ class Decrement extends ActionMonad<State> {
 type ActionsUnion = Increment | Decrement;
 
 const actionQ = new Subject<AsyncType<ActionsUnion>>();
-const onDestroy = new Subject<boolean>();
+
 const initialState = {
   count: 0
 };
 
-const config = {
-  initialState$: of(initialState),
-  metaMap$: of({}),
-  actionQ$: actionQ.asObservable(),
-  onDestroy$: onDestroy.asObservable()
-};
+const initialState$ = of(initialState);
+const actions$ = actionQ.asObservable();
 
-const opts = {
-  actionFop: FlattenOps.concatMap, //Action flattening operator default: concatMap
-  stateFop: FlattenOps.switchMap //State flattening operator default: switchMap
-};
-
-const store = new AsyncStore<State, ActionsUnion>(config, opts);
+const store = new AsyncStore<State, ActionsUnion>({
+  initialState$,
+  actions$
+});
 
 store.state$.pipe(select(state => state.count)).subscribe(console.log);
 
-const inc10 = new Increment(10);
-const decr2 = new Decrement(2);
+const add100 = new Increment(100);
 
-actionQ.next(inc10);
-actionQ.next(inc10);
-actionQ.next(inc10);
-actionQ.next(decr2);
-
-const add10times2 = interval(200).pipe(
-  map(() => inc10),
-  take(2)
+const add100times5 = interval(200).pipe(
+  map(() => add100),
+  take(5)
 );
 
-actionQ.next(add10times2);
+actionQ.next(add100times5);
 ```
-
-<!-- #### Counter example: [stackblitz](https://stackblitz.com/edit/async-store-counter) -->
-
-<!-- #### [Full Example (stackblitz)](https://stackblitz.com/edit/async-store-todo) -->
 
 ## Changelog
 
 ## Want to help?
-
-Want to file a bug, contribute some code, or improve documentation? Excellent! Read up on our
-guidelines for contribution and then check out some of our issues in the log.
