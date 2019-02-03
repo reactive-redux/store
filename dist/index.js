@@ -190,7 +190,7 @@ function ofType() {
 }
 
 var compose = function (fns) {
-    return fns.reduceRight(function (f, g) { return function () {
+    return fns.reduce(function (f, g) { return function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
@@ -206,23 +206,31 @@ var mapToObservable = rxjs.pipe(operators.map(function (value) {
         return rxjs.from(value);
     return rxjs.of(value);
 }));
-var mapMeta = function (mapFn) { return function (reducer) { return function (state) { return mapFn(reducer(state)); }; }; };
-var filterMeta = function (predicate) { return function (reducer) { return function (state) {
-    var newState = reducer(state);
+var metaMapS = function (mapFn) { return function (reducer) { return function (state, action) { return mapFn(reducer(state, action)); }; }; };
+var metaMapA = function (mapFn) { return function (reducer) { return function (state, action) {
+    return reducer(state, mapFn(action));
+}; }; };
+var metaFilterS = function (predicate) { return function (reducer) { return function (state, action) {
+    var newState = reducer(state, action);
     return predicate(newState) ? newState : state;
 }; }; };
+var metaFilterA = function (predicate) { return function (reducer) { return function (state, action) {
+    return predicate(action) ? reducer(state, action) : state;
+}; }; };
 
-function reducerFactory(metaReducerMap) {
+function reducerFactory(actionMap, metaReducerMap) {
     var metaReducers = Object.keys(metaReducerMap).map(function (key) { return metaReducerMap[key]; });
     var hasMeta = metaReducers.length > 0;
     return function (state, action) {
         if (!(action.type &&
-            action.runWith &&
-            typeof action.runWith === 'function'))
+            typeof action.type === 'string' &&
+            !!actionMap[action.type] &&
+            typeof actionMap[action.type] === 'function'))
             return state;
+        var reducer = actionMap[action.type];
         return hasMeta
-            ? compose(metaReducers)(action.runWith)(state)
-            : action.runWith(state);
+            ? compose(metaReducers)(reducer)(state, action)
+            : reducer(state, action);
     };
 }
 
@@ -234,6 +242,18 @@ function reducerFactory(metaReducerMap) {
  * @class AsyncStore<State, ActionsUnion>
  */
 var AsyncStore = /** @class */ (function () {
+    /**
+     * Config defaults:
+     *    actionMap$ = of({})
+     *    actions$ = new Subject() (if not defined, no actions will be dispatched in the store)
+     *    initialState$ = of({})
+     *    metaReducers$ = of({})
+     *    destroy$ = new Subject() (if not defined, the state subscription is never destroyed)
+     *
+     * Options defaults:
+     *    actions = concatMap
+     *    state = switchMap
+     */
     function AsyncStore(config, options) {
         this.config = config;
         this.options = options;
@@ -243,49 +263,41 @@ var AsyncStore = /** @class */ (function () {
             concatMap: operators.concatMap,
             exhaustMap: operators.exhaustMap
         };
-        /**
-         * Config defaults:
-         *    actions$ = of({})
-         *    initialState$ = of({})
-         *    metaReducers$ = of({})
-         *    destroy$ = new Subject() (never destroyed)
-         *
-         * Options defaults:
-         *    actions = concatMap
-         *    state = switchMap
-         */
-        var actions$ = (this.config &&
+        var _actionMap$ = (this.config &&
+            this.config.actionMap$ &&
+            this.config.actionMap$.pipe(catchErr)) ||
+            rxjs.of({});
+        var _actions$ = (this.config &&
             this.config.actions$ &&
             this.config.actions$.pipe(catchErr)) ||
-            rxjs.of({});
-        var initialState$ = (this.config &&
+            new rxjs.Subject().asObservable();
+        var _initialState$ = (this.config &&
             this.config.initialState$ &&
             this.config.initialState$.pipe(catchErr)) ||
             rxjs.of({});
-        var metaReducers$ = (this.config &&
+        var _metaReducers$ = (this.config &&
             this.config.metaReducers$ &&
             this.config.metaReducers$.pipe(catchErr)) ||
             rxjs.of({});
-        var destroy$ = (this.config &&
+        var _destroy$ = (this.config &&
             this.config.onDestroy$ &&
             this.config.onDestroy$.pipe(catchErr)) ||
             new rxjs.Subject().asObservable();
         var actionFop = this.flattenOp[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
         var stateFop = this.flattenOp[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
-        //State observable
-        this.state$ = rxjs.combineLatest(initialState$, metaReducers$).pipe(operators.map(function (_a) {
-            var _b = __read(_a, 2), i = _b[0], m = _b[1];
-            return operators.scan(reducerFactory(m), i);
+        this.state$ = rxjs.combineLatest(_actionMap$, _metaReducers$, _initialState$).pipe(operators.map(function (_a) {
+            var _b = __read(_a, 3), a = _b[0], m = _b[1], i = _b[2];
+            return operators.scan(reducerFactory(a, m), i);
         }), operators.switchMap(function (reducer) {
-            return actions$.pipe(operators.filter(function (a) { return !!a; }), mapToObservable, actionFop(function (a) { return a.pipe(catchErr); }), reducer, mapToObservable);
-        }), operators.startWith(initialState$), stateFop(function (state) { return state.pipe(catchErr); }), operators.takeUntil(destroy$), operators.shareReplay(1));
+            return _actions$.pipe(operators.filter(function (a) { return !!a; }), mapToObservable, actionFop(function (a) { return a.pipe(catchErr); }), reducer, mapToObservable);
+        }), operators.startWith(_initialState$), stateFop(function (state) { return state.pipe(catchErr); }), operators.takeUntil(_destroy$), operators.shareReplay(1));
         this.state$.subscribe();
     }
     return AsyncStore;
 }());
 
-var ActionMonad = /** @class */ (function () {
-    function ActionMonad(payload) {
+var Action = /** @class */ (function () {
+    function Action(payload) {
         var _this = this;
         this.payload = payload;
         this.type = '';
@@ -293,16 +305,18 @@ var ActionMonad = /** @class */ (function () {
             get: function () { return _this.constructor.name; }
         });
     }
-    return ActionMonad;
+    return Action;
 }());
 
 exports.createSelector = createSelector;
 exports.ofType = ofType;
 exports.select = select;
 exports.AsyncStore = AsyncStore;
-exports.ActionMonad = ActionMonad;
+exports.Action = Action;
 exports.compose = compose;
 exports.catchErr = catchErr;
 exports.mapToObservable = mapToObservable;
-exports.mapMeta = mapMeta;
-exports.filterMeta = filterMeta;
+exports.metaMapS = metaMapS;
+exports.metaMapA = metaMapA;
+exports.metaFilterS = metaFilterS;
+exports.metaFilterA = metaFilterA;

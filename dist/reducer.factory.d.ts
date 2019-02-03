@@ -1,3 +1,3 @@
-import { MetaReducerMap } from './interfaces';
-import { ActionMonad } from './action.monad';
-export declare function reducerFactory<State, ActionsUnion extends ActionMonad<State>>(metaReducerMap: MetaReducerMap<State>): (state: State, action: ActionsUnion) => any;
+import { MetaReducerMap, ActionMap } from './interfaces';
+import { Action } from './action';
+export declare function reducerFactory<State, ActionsUnion extends Action>(actionMap: ActionMap<State>, metaReducerMap: MetaReducerMap<State>): (state: State, action: ActionsUnion) => any;

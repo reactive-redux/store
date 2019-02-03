@@ -1,5 +1,5 @@
 import { Observable, OperatorFunction } from 'rxjs';
-import { Action } from './interfaces';
+import { IAction } from './interfaces';
 export declare type Selector<T, V> = (state: T) => V;
 export declare type SelectorWithProps<State, Props, Result> = (state: State, props: Props) => Result;
 export declare type AnyFn = (...args: any[]) => any;
@@ -69,4 +69,4 @@ export declare function select<T, a extends keyof T, b extends keyof T[a], c ext
 export declare function select<T, a extends keyof T, b extends keyof T[a], c extends keyof T[a][b], d extends keyof T[a][b][c], e extends keyof T[a][b][c][d]>(key1: a, key2: b, key3: c, key4: d, key5: e): (source$: Observable<T>) => Observable<T[a][b][c][d][e]>;
 export declare function select<T, a extends keyof T, b extends keyof T[a], c extends keyof T[a][b], d extends keyof T[a][b][c], e extends keyof T[a][b][c][d], f extends keyof T[a][b][c][d][e]>(key1: a, key2: b, key3: c, key4: d, key5: e, key6: f): (source$: Observable<T>) => Observable<T[a][b][c][d][e][f]>;
 export declare function select<T, Props = any, K = any>(propsOrPath: Props, ...paths: string[]): (source$: Observable<T>) => Observable<K>;
-export declare function ofType<T extends Action>(...allowedTypes: string[]): OperatorFunction<Action, T>;
+export declare function ofType<T extends IAction>(...allowedTypes: string[]): OperatorFunction<IAction, T>;

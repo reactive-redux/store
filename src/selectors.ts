@@ -1,6 +1,6 @@
 import { Observable, OperatorFunction } from 'rxjs';
 import { pluck, map, distinctUntilChanged, filter } from 'rxjs/operators';
-import { Action } from './interfaces';
+import { IAction } from './interfaces';
 
 // ngrx selectors with overloading and memoization
 
@@ -759,11 +759,11 @@ export function select<T, Props, K>(
   };
 }
 
-export function ofType<T extends Action>(
+export function ofType<T extends IAction>(
   ...allowedTypes: string[]
-): OperatorFunction<Action, T> {
+): OperatorFunction<IAction, T> {
   return filter(
-    (action: Action): action is T =>
+    (action: IAction): action is T =>
       allowedTypes.some(type => type === action.type)
   );
 }

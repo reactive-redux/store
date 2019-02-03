@@ -1,11 +1,11 @@
 import { compose } from './utils';
-import { MetaReducerMap } from './interfaces';
-import { ActionMonad } from './action.monad';
+import { MetaReducerMap, ActionMap } from './interfaces';
+import { Action } from './action';
 
-export function reducerFactory<
-  State,
-  ActionsUnion extends ActionMonad<State>
->(metaReducerMap: MetaReducerMap<State>) {
+export function reducerFactory<State, ActionsUnion extends Action>(
+  actionMap: ActionMap<State>,
+  metaReducerMap: MetaReducerMap<State>
+) {
   const metaReducers = Object.keys(metaReducerMap).map(
     key => metaReducerMap[key]
   );
@@ -15,14 +15,17 @@ export function reducerFactory<
     if (
       !(
         action.type &&
-        action.runWith &&
-        typeof action.runWith === 'function'
+        typeof action.type === 'string' &&
+        !!actionMap[action.type] &&
+        typeof actionMap[action.type] === 'function'
       )
     )
       return state;
 
+    const reducer = actionMap[action.type];
+
     return hasMeta
-      ? compose(metaReducers)(action.runWith)(state)
-      : action.runWith(state);
+      ? compose(metaReducers)(reducer)(state, action)
+      : reducer(state, action);
   };
 }

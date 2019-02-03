@@ -1,6 +1,6 @@
 {
   "name": "@reactive-redux/async-store",
-  "version": "2.0.1",
+  "version": "3.0.2",
   "description": "Reactive state container",
   "author": "Zdravko Tatarski",
   "license": "MIT",
@@ -25,7 +25,7 @@
     "rollup-plugin-typescript2": "0.19.2",
     "ts-jest": "23.10.5",
     "ts-node": "7.0.1",
-    "typescript": "3.1.6"
+    "typescript": "3.3.1"
   },
   "dependencies": {
     "rxjs": "6.4.0"

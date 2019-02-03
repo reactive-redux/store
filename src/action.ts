@@ -1,12 +1,10 @@
-import { Action } from './interfaces';
+import { IAction } from './interfaces';
 
-export abstract class ActionMonad<State> implements Action {
+export abstract class Action implements IAction {
   readonly type: string = '';
   constructor(public payload?: unknown) {
     Object.defineProperty(this, 'type', {
       get: () => this.constructor.name
     });
   }
-
-  abstract runWith(state: State): State;
 }

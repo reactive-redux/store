@@ -12,7 +12,7 @@
 import { of, Subject, interval } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import {
-  ActionMonad,
+  Action,
   AsyncStore,
   AsyncType,
   select
@@ -23,27 +23,15 @@ interface State {
   count: number;
 }
 
-class Increment extends ActionMonad<State> {
+class Increment extends Action {
   constructor(public payload: number) {
     super();
-  }
-
-  runWith(s: State) {
-    return {
-      count: s.count + this.payload
-    };
   }
 }
 
-class Decrement extends ActionMonad<State> {
+class Decrement extends Action {
   constructor(public payload: number) {
     super();
-  }
-
-  runWith(s: State) {
-    return {
-      count: s.count - this.payload
-    };
   }
 }
 
@@ -58,9 +46,21 @@ const initialState = {
 const initialState$ = of(initialState);
 const actions$ = actionQ.asObservable();
 
+const actionMap$ = of({
+  [Increment.name]: (state: State, action: Increment) => ({
+    ...state,
+    count: state.count + action.payload
+  }),
+  [Decrement.name]: (state: State, action: Decrement) => ({
+    ...state,
+    count: state.count - action.payload
+  })
+});
+
 const store = new AsyncStore<State, ActionsUnion>({
   initialState$,
-  actions$
+  actions$,
+  actionMap$
 });
 
 store.state$.pipe(select(state => state.count)).subscribe(console.log);

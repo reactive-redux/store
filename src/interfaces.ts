@@ -2,12 +2,16 @@ import { Observable } from 'rxjs';
 
 export type AsyncType<T> = T | Promise<T> | Observable<T>;
 
-export interface Action {
+export interface IAction {
   type: string;
   payload?: unknown;
 }
 
-export type ReducerFn<State> = (state: State) => State;
+export type ReducerFn<State> = (state: State, action: any) => State;
+
+export type ActionMap<State> = {
+  [key: string]: ReducerFn<State>;
+};
 
 export type MetaReducerFn<State> = (
   reducer: ReducerFn<State>
