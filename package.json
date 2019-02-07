@@ -1,6 +1,6 @@
 {
-  "name": "@reactive-redux/async-store",
-  "version": "3.0.2",
+  "name": "@reactive-redux/store",
+  "version": "2.1.1",
   "description": "Reactive state container",
   "author": "Zdravko Tatarski",
   "license": "MIT",
@@ -9,7 +9,7 @@
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/reactive-redux/async-store",
+  "homepage": "https://github.com/reactive-redux/store",
   "scripts": {
     "start": "nodemon",
     "build": "./node_modules/.bin/rollup -c",
@@ -35,6 +35,7 @@
     "redux",
     "reactive redux",
     "state container",
-    "reactive container"
+    "reactive container",
+    "reactive store"
   ]
 }

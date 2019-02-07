@@ -1,22 +1,17 @@
-[![npm version](https://badge.fury.io/js/%40reactive-redux%2Fasync-store.svg)](https://badge.fury.io/js/%40reactive-redux%2Fasync-store)
+[![npm version](https://badge.fury.io/js/%40reactive-redux%2Fstore.svg)](https://badge.fury.io/js/%40reactive-redux%2Fstore)
 
 # Reactive state container
 
 ## Install
 
-#### `npm i @reactive-redux/async-store`
+#### `npm i @reactive-redux/store`
 
 ## Example
 
 ```typescript
 import { of, Subject, interval } from 'rxjs';
 import { map, take } from 'rxjs/operators';
-import {
-  Action,
-  AsyncStore,
-  AsyncType,
-  select
-} from '@reactive-redux/async-store';
+import { Action, Store, AsyncType, select } from '@reactive-redux/store';
 
 //Counter example
 interface State {
@@ -57,7 +52,7 @@ const actionMap$ = of({
   })
 });
 
-const store = new AsyncStore<State, ActionsUnion>({
+const store = new Store<State, ActionsUnion>({
   initialState$,
   actions$,
   actionMap$

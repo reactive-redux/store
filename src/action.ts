@@ -1,10 +1,9 @@
 import { IAction } from './interfaces';
 
-export abstract class Action implements IAction {
-  readonly type: string = '';
-  constructor(public payload?: unknown) {
-    Object.defineProperty(this, 'type', {
-      get: () => this.constructor.name
-    });
+export class Action implements IAction {
+  constructor(public payload?: unknown) {}
+
+  get type() {
+    return this.constructor.name;
   }
 }

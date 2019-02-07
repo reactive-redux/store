@@ -29,7 +29,7 @@ import { mapToObservable, catchErr } from './utils';
  * @class AsyncStore<State, ActionsUnion>
  */
 
-export class AsyncStore<State, ActionsUnion = any> {
+export class Store<State, ActionsUnion = any> {
   public state$: Observable<State>;
 
   private flattenOp: { [key in FlattenOps]: any } = {
@@ -55,7 +55,7 @@ export class AsyncStore<State, ActionsUnion = any> {
     private config?: {
       actionMap$?: Observable<ActionMap<State>>;
       actions$?: Observable<AsyncType<ActionsUnion>>;
-      initialState$?: Observable<AsyncType<State>>;
+      initialState$?: Observable<State>;
       metaReducers$?: Observable<MetaReducerMap<State>>;
       onDestroy$?: Observable<boolean>;
     },
@@ -70,7 +70,7 @@ export class AsyncStore<State, ActionsUnion = any> {
         this.config.actionMap$.pipe(catchErr)) ||
       of({});
 
-    const _actions$ =
+    const _actions$: Observable<AsyncType<ActionsUnion>> =
       (this.config &&
         this.config.actions$ &&
         this.config.actions$.pipe(catchErr)) ||
@@ -107,7 +107,7 @@ export class AsyncStore<State, ActionsUnion = any> {
       _metaReducers$,
       _initialState$
     ).pipe(
-      map(([a, m, i]) => scan(reducerFactory(a, m), i)),
+      map(([map, meta, state]) => scan(reducerFactory(map, meta), state)),
       switchMap(reducer =>
         _actions$.pipe(
           filter(a => !!a),

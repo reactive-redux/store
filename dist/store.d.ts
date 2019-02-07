@@ -7,7 +7,7 @@ import { MetaReducerMap, FlattenOps, AsyncType, ActionMap } from './interfaces';
  *
  * @class AsyncStore<State, ActionsUnion>
  */
-export declare class AsyncStore<State, ActionsUnion = any> {
+export declare class Store<State, ActionsUnion = any> {
     private config?;
     private options?;
     state$: Observable<State>;
@@ -27,7 +27,7 @@ export declare class AsyncStore<State, ActionsUnion = any> {
     constructor(config?: {
         actionMap$?: Observable<ActionMap<State>> | undefined;
         actions$?: Observable<AsyncType<ActionsUnion>> | undefined;
-        initialState$?: Observable<AsyncType<State>> | undefined;
+        initialState$?: Observable<State> | undefined;
         metaReducers$?: Observable<MetaReducerMap<State>> | undefined;
         onDestroy$?: Observable<boolean> | undefined;
     } | undefined, options?: {

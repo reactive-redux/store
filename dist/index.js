@@ -241,7 +241,7 @@ function reducerFactory(actionMap, metaReducerMap) {
  *
  * @class AsyncStore<State, ActionsUnion>
  */
-var AsyncStore = /** @class */ (function () {
+var Store = /** @class */ (function () {
     /**
      * Config defaults:
      *    actionMap$ = of({})
@@ -254,7 +254,7 @@ var AsyncStore = /** @class */ (function () {
      *    actions = concatMap
      *    state = switchMap
      */
-    function AsyncStore(config, options) {
+    function Store(config, options) {
         this.config = config;
         this.options = options;
         this.flattenOp = {
@@ -286,32 +286,34 @@ var AsyncStore = /** @class */ (function () {
         var actionFop = this.flattenOp[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
         var stateFop = this.flattenOp[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
         this.state$ = rxjs.combineLatest(_actionMap$, _metaReducers$, _initialState$).pipe(operators.map(function (_a) {
-            var _b = __read(_a, 3), a = _b[0], m = _b[1], i = _b[2];
-            return operators.scan(reducerFactory(a, m), i);
+            var _b = __read(_a, 3), map = _b[0], meta = _b[1], state = _b[2];
+            return operators.scan(reducerFactory(map, meta), state);
         }), operators.switchMap(function (reducer) {
             return _actions$.pipe(operators.filter(function (a) { return !!a; }), mapToObservable, actionFop(function (a) { return a.pipe(catchErr); }), reducer, mapToObservable);
         }), operators.startWith(_initialState$), stateFop(function (state) { return state.pipe(catchErr); }), operators.takeUntil(_destroy$), operators.shareReplay(1));
         this.state$.subscribe();
     }
-    return AsyncStore;
+    return Store;
 }());
 
 var Action = /** @class */ (function () {
     function Action(payload) {
-        var _this = this;
         this.payload = payload;
-        this.type = '';
-        Object.defineProperty(this, 'type', {
-            get: function () { return _this.constructor.name; }
-        });
     }
+    Object.defineProperty(Action.prototype, "type", {
+        get: function () {
+            return this.constructor.name;
+        },
+        enumerable: true,
+        configurable: true
+    });
     return Action;
 }());
 
 exports.createSelector = createSelector;
 exports.ofType = ofType;
 exports.select = select;
-exports.AsyncStore = AsyncStore;
+exports.Store = Store;
 exports.Action = Action;
 exports.compose = compose;
 exports.catchErr = catchErr;
