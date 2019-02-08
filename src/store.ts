@@ -30,14 +30,14 @@ import { mapToObservable, catchErr } from './utils';
  */
 
 export class Store<State, ActionsUnion = any> {
-  public state$: Observable<State>;
-
-  private flattenOp: { [key in FlattenOps]: any } = {
+  static readonly flattenOp: { [key in FlattenOps]: any } = {
     switchMap,
     mergeMap,
     concatMap,
     exhaustMap
   };
+
+  public state$: Observable<State>;
 
   /**
    * Config defaults:
@@ -48,8 +48,8 @@ export class Store<State, ActionsUnion = any> {
    *    destroy$ = new Subject() (if not defined, the state subscription is never destroyed)
    *
    * Options defaults:
-   *    actions = concatMap
-   *    state = switchMap
+   *    actions = concatMap (actions are executed in order of propagation)
+   *    state = switchMap (will update to the latest received state, without waiting for previous async operations to finish)
    */
   constructor(
     private config?: {
@@ -94,13 +94,15 @@ export class Store<State, ActionsUnion = any> {
         this.config.onDestroy$.pipe(catchErr)) ||
       new Subject<boolean>().asObservable();
 
-    const actionFop = this.flattenOp[
-      (this.options && this.options.actionFop) || FlattenOps.concatMap
-    ];
+    const actionFop =
+      Store.flattenOp[
+        (this.options && this.options.actionFop) || FlattenOps.concatMap
+      ];
 
-    const stateFop = this.flattenOp[
-      (this.options && this.options.stateFop) || FlattenOps.switchMap
-    ];
+    const stateFop =
+      Store.flattenOp[
+        (this.options && this.options.stateFop) || FlattenOps.switchMap
+      ];
 
     this.state$ = combineLatest(
       _actionMap$,

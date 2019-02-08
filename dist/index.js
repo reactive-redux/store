@@ -251,18 +251,12 @@ var Store = /** @class */ (function () {
      *    destroy$ = new Subject() (if not defined, the state subscription is never destroyed)
      *
      * Options defaults:
-     *    actions = concatMap
-     *    state = switchMap
+     *    actions = concatMap (actions are executed in order of propagation)
+     *    state = switchMap (will update to the latest received state, without waiting for previous async operations to finish)
      */
     function Store(config, options) {
         this.config = config;
         this.options = options;
-        this.flattenOp = {
-            switchMap: operators.switchMap,
-            mergeMap: operators.mergeMap,
-            concatMap: operators.concatMap,
-            exhaustMap: operators.exhaustMap
-        };
         var _actionMap$ = (this.config &&
             this.config.actionMap$ &&
             this.config.actionMap$.pipe(catchErr)) ||
@@ -283,8 +277,8 @@ var Store = /** @class */ (function () {
             this.config.onDestroy$ &&
             this.config.onDestroy$.pipe(catchErr)) ||
             new rxjs.Subject().asObservable();
-        var actionFop = this.flattenOp[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
-        var stateFop = this.flattenOp[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
+        var actionFop = Store.flattenOp[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
+        var stateFop = Store.flattenOp[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
         this.state$ = rxjs.combineLatest(_actionMap$, _metaReducers$, _initialState$).pipe(operators.map(function (_a) {
             var _b = __read(_a, 3), map = _b[0], meta = _b[1], state = _b[2];
             return operators.scan(reducerFactory(map, meta), state);
@@ -293,6 +287,12 @@ var Store = /** @class */ (function () {
         }), operators.startWith(_initialState$), stateFop(function (state) { return state.pipe(catchErr); }), operators.takeUntil(_destroy$), operators.shareReplay(1));
         this.state$.subscribe();
     }
+    Store.flattenOp = {
+        switchMap: operators.switchMap,
+        mergeMap: operators.mergeMap,
+        concatMap: operators.concatMap,
+        exhaustMap: operators.exhaustMap
+    };
     return Store;
 }());
 

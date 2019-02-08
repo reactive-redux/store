@@ -10,8 +10,10 @@ import { MetaReducerMap, FlattenOps, AsyncType, ActionMap } from './interfaces';
 export declare class Store<State, ActionsUnion = any> {
     private config?;
     private options?;
+    static readonly flattenOp: {
+        [key in FlattenOps]: any;
+    };
     state$: Observable<State>;
-    private flattenOp;
     /**
      * Config defaults:
      *    actionMap$ = of({})
@@ -21,8 +23,8 @@ export declare class Store<State, ActionsUnion = any> {
      *    destroy$ = new Subject() (if not defined, the state subscription is never destroyed)
      *
      * Options defaults:
-     *    actions = concatMap
-     *    state = switchMap
+     *    actions = concatMap (actions are executed in order of propagation)
+     *    state = switchMap (will update to the latest received state, without waiting for previous async operations to finish)
      */
     constructor(config?: {
         actionMap$?: Observable<ActionMap<State>> | undefined;
