@@ -64,9 +64,7 @@ export class Store<State, ActionsUnion = any> {
       of({});
 
     const _actions$: Observable<AsyncType<ActionsUnion>> =
-      (this.config &&
-        this.config.actions$ &&
-        this.config.actions$.pipe(catchErr)) ||
+      (this.config && this.config.actions$ && this.config.actions$.pipe(catchErr)) ||
       never();
 
     const _initialState$: Observable<State> =
@@ -97,11 +95,7 @@ export class Store<State, ActionsUnion = any> {
         (this.options && this.options.stateFop) || FlattenOps.switchMap
       ];
 
-    this.state$ = combineLatest(
-      _actionMap$,
-      _metaReducers$,
-      _initialState$
-    ).pipe(
+    this.state$ = combineLatest(_actionMap$, _metaReducers$, _initialState$).pipe(
       map(([map, meta, state]) => scan(reducerFactory(map, meta), state)),
       switchMap(reducer =>
         _actions$.pipe(

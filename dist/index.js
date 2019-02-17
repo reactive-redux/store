@@ -206,15 +206,13 @@ var mapToObservable = rxjs.pipe(operators.map(function (value) {
         return rxjs.from(value);
     return rxjs.of(value);
 }));
-var metaMapS = function (mapFn) { return function (reducer) { return function (state, action) { return mapFn(reducer(state, action)); }; }; };
-var metaMapA = function (mapFn) { return function (reducer) { return function (state, action) {
-    return reducer(state, mapFn(action));
-}; }; };
-var metaFilterS = function (predicate) { return function (reducer) { return function (state, action) {
+var mapS = function (mapFn) { return function (reducer) { return function (state, action) { return mapFn(reducer(state, action)); }; }; };
+var mapA = function (mapFn) { return function (reducer) { return function (state, action) { return reducer(state, mapFn(action)); }; }; };
+var filterS = function (predicate) { return function (reducer) { return function (state, action) {
     var newState = reducer(state, action);
     return predicate(newState) ? newState : state;
 }; }; };
-var metaFilterA = function (predicate) { return function (reducer) { return function (state, action) {
+var filterA = function (predicate) { return function (reducer) { return function (state, action) {
     return predicate(action) ? reducer(state, action) : state;
 }; }; };
 
@@ -261,9 +259,7 @@ var Store = /** @class */ (function () {
             this.config.actionMap$ &&
             this.config.actionMap$.pipe(catchErr)) ||
             rxjs.of({});
-        var _actions$ = (this.config &&
-            this.config.actions$ &&
-            this.config.actions$.pipe(catchErr)) ||
+        var _actions$ = (this.config && this.config.actions$ && this.config.actions$.pipe(catchErr)) ||
             rxjs.never();
         var _initialState$ = (this.config &&
             this.config.initialState$ &&
@@ -322,7 +318,7 @@ exports.Action = Action;
 exports.compose = compose;
 exports.catchErr = catchErr;
 exports.mapToObservable = mapToObservable;
-exports.metaMapS = metaMapS;
-exports.metaMapA = metaMapA;
-exports.metaFilterS = metaFilterS;
-exports.metaFilterA = metaFilterA;
+exports.mapS = mapS;
+exports.mapA = mapA;
+exports.filterS = filterS;
+exports.filterA = filterA;

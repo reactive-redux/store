@@ -33,9 +33,7 @@ export type ActionMap<State> = {
   [key: string]: ReducerFn<State>;
 };
 
-export type MetaReducerFn<State> = (
-  reducer: ReducerFn<State>
-) => ReducerFn<State>;
+export type MetaReducerFn<State> = (reducer: ReducerFn<State>) => ReducerFn<State>;
 
 export type MetaReducerMap<T> = {
   [key: string]: MetaReducerFn<T>;

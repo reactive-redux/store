@@ -13,10 +13,10 @@ import { of, Subject, interval } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import {
   Action,
-  Store,
   AsyncType,
   select,
-  createSelector
+  createSelector,
+  createStore
 } from '@reactive-redux/store';
 
 //Counter example
@@ -36,7 +36,7 @@ class DecrementBy extends Action {
   }
 }
 
-type ActionsUnion = Increment | Decrement;
+type ActionsUnion = IncrementBy | DecrementBy;
 
 const actionQ = new Subject<AsyncType<ActionsUnion>>();
 
@@ -47,12 +47,12 @@ const initialState = {
 const initialState$ = of(initialState);
 const actions$ = actionQ.asObservable();
 
-const incrementBy = (state: State, action: Increment) => ({
+const incrementBy = (state: State, action: IncrementBy) => ({
   ...state,
   count: state.count + action.payload
 });
 
-const decrementBy = (state: State, action: Decrement) => ({
+const decrementBy = (state: State, action: DecrementBy) => ({
   ...state,
   count: state.count - action.payload
 });

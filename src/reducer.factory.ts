@@ -6,9 +6,7 @@ export function reducerFactory<State, ActionsUnion extends Action>(
   actionMap: ActionMap<State>,
   metaReducerMap: MetaReducerMap<State>
 ) {
-  const metaReducers = Object.keys(metaReducerMap).map(
-    key => metaReducerMap[key]
-  );
+  const metaReducers = Object.keys(metaReducerMap).map(key => metaReducerMap[key]);
   const hasMeta = metaReducers.length > 0;
 
   return (state: State, action: ActionsUnion) => {
