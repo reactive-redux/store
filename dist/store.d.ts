@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { MetaReducerMap, FlattenOps, AsyncType, ActionMap } from './interfaces';
+import { FlattenOps, StoreConfig, StoreOptions } from './interfaces';
 /**
  * State container based on RxJS observables
  *
@@ -10,7 +10,7 @@ import { MetaReducerMap, FlattenOps, AsyncType, ActionMap } from './interfaces';
 export declare class Store<State, ActionsUnion = any> {
     private config?;
     private options?;
-    static readonly flattenOp: {
+    static readonly FlattenOperators: {
         [key in FlattenOps]: any;
     };
     state$: Observable<State>;
@@ -26,14 +26,6 @@ export declare class Store<State, ActionsUnion = any> {
      *    actions = concatMap (actions are executed in order of propagation)
      *    state = switchMap (will update to the latest received state, without waiting for previous async operations to finish)
      */
-    constructor(config?: {
-        actionMap$?: Observable<ActionMap<State>> | undefined;
-        actions$?: Observable<AsyncType<ActionsUnion>> | undefined;
-        initialState$?: Observable<State> | undefined;
-        metaReducers$?: Observable<MetaReducerMap<State>> | undefined;
-        onDestroy$?: Observable<boolean> | undefined;
-    } | undefined, options?: {
-        actionFop?: FlattenOps | undefined;
-        stateFop?: FlattenOps | undefined;
-    } | undefined);
+    constructor(config?: StoreConfig<State, ActionsUnion> | undefined, options?: StoreOptions | undefined);
 }
+export declare function createStore<State, ActionsUnion = any>(config?: StoreConfig<State, ActionsUnion>, opts?: StoreOptions): Store<State, ActionsUnion>;

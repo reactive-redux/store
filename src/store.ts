@@ -1,4 +1,4 @@
-import { Observable, combineLatest, Subject, of } from 'rxjs';
+import { Observable, combineLatest, of, never } from 'rxjs';
 import {
   scan,
   startWith,
@@ -17,7 +17,9 @@ import {
   MetaReducerMap,
   FlattenOps,
   AsyncType,
-  ActionMap
+  ActionMap,
+  StoreConfig,
+  StoreOptions
 } from './interfaces';
 import { mapToObservable, catchErr } from './utils';
 
@@ -30,7 +32,7 @@ import { mapToObservable, catchErr } from './utils';
  */
 
 export class Store<State, ActionsUnion = any> {
-  static readonly flattenOp: { [key in FlattenOps]: any } = {
+  static readonly FlattenOperators: { [key in FlattenOps]: any } = {
     switchMap,
     mergeMap,
     concatMap,
@@ -52,17 +54,8 @@ export class Store<State, ActionsUnion = any> {
    *    state = switchMap (will update to the latest received state, without waiting for previous async operations to finish)
    */
   constructor(
-    private config?: {
-      actionMap$?: Observable<ActionMap<State>>;
-      actions$?: Observable<AsyncType<ActionsUnion>>;
-      initialState$?: Observable<State>;
-      metaReducers$?: Observable<MetaReducerMap<State>>;
-      onDestroy$?: Observable<boolean>;
-    },
-    private options?: {
-      actionFop?: FlattenOps;
-      stateFop?: FlattenOps;
-    }
+    private config?: StoreConfig<State, ActionsUnion>,
+    private options?: StoreOptions
   ) {
     const _actionMap$: Observable<ActionMap<State>> =
       (this.config &&
@@ -74,7 +67,7 @@ export class Store<State, ActionsUnion = any> {
       (this.config &&
         this.config.actions$ &&
         this.config.actions$.pipe(catchErr)) ||
-      new Subject().asObservable();
+      never();
 
     const _initialState$: Observable<State> =
       (this.config &&
@@ -92,15 +85,15 @@ export class Store<State, ActionsUnion = any> {
       (this.config &&
         this.config.onDestroy$ &&
         this.config.onDestroy$.pipe(catchErr)) ||
-      new Subject<boolean>().asObservable();
+      never();
 
     const actionFop =
-      Store.flattenOp[
+      Store.FlattenOperators[
         (this.options && this.options.actionFop) || FlattenOps.concatMap
       ];
 
     const stateFop =
-      Store.flattenOp[
+      Store.FlattenOperators[
         (this.options && this.options.stateFop) || FlattenOps.switchMap
       ];
 
@@ -127,4 +120,11 @@ export class Store<State, ActionsUnion = any> {
 
     this.state$.subscribe();
   }
+}
+
+export function createStore<State, ActionsUnion = any>(
+  config?: StoreConfig<State, ActionsUnion>,
+  opts?: StoreOptions
+) {
+  return new Store<State, ActionsUnion>(config, opts);
 }

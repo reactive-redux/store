@@ -264,7 +264,7 @@ var Store = /** @class */ (function () {
         var _actions$ = (this.config &&
             this.config.actions$ &&
             this.config.actions$.pipe(catchErr)) ||
-            new rxjs.Subject().asObservable();
+            rxjs.never();
         var _initialState$ = (this.config &&
             this.config.initialState$ &&
             this.config.initialState$.pipe(catchErr)) ||
@@ -276,9 +276,9 @@ var Store = /** @class */ (function () {
         var _destroy$ = (this.config &&
             this.config.onDestroy$ &&
             this.config.onDestroy$.pipe(catchErr)) ||
-            new rxjs.Subject().asObservable();
-        var actionFop = Store.flattenOp[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
-        var stateFop = Store.flattenOp[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
+            rxjs.never();
+        var actionFop = Store.FlattenOperators[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
+        var stateFop = Store.FlattenOperators[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
         this.state$ = rxjs.combineLatest(_actionMap$, _metaReducers$, _initialState$).pipe(operators.map(function (_a) {
             var _b = __read(_a, 3), map = _b[0], meta = _b[1], state = _b[2];
             return operators.scan(reducerFactory(map, meta), state);
@@ -287,7 +287,7 @@ var Store = /** @class */ (function () {
         }), operators.startWith(_initialState$), stateFop(function (state) { return state.pipe(catchErr); }), operators.takeUntil(_destroy$), operators.shareReplay(1));
         this.state$.subscribe();
     }
-    Store.flattenOp = {
+    Store.FlattenOperators = {
         switchMap: operators.switchMap,
         mergeMap: operators.mergeMap,
         concatMap: operators.concatMap,
@@ -295,6 +295,9 @@ var Store = /** @class */ (function () {
     };
     return Store;
 }());
+function createStore(config, opts) {
+    return new Store(config, opts);
+}
 
 var Action = /** @class */ (function () {
     function Action(payload) {
@@ -314,6 +317,7 @@ exports.createSelector = createSelector;
 exports.ofType = ofType;
 exports.select = select;
 exports.Store = Store;
+exports.createStore = createStore;
 exports.Action = Action;
 exports.compose = compose;
 exports.catchErr = catchErr;

@@ -11,20 +11,26 @@
 ```typescript
 import { of, Subject, interval } from 'rxjs';
 import { map, take } from 'rxjs/operators';
-import { Action, Store, AsyncType, select } from '@reactive-redux/store';
+import {
+  Action,
+  Store,
+  AsyncType,
+  select,
+  createSelector
+} from '@reactive-redux/store';
 
 //Counter example
 interface State {
   count: number;
 }
 
-class Increment extends Action {
+class IncrementBy extends Action {
   constructor(public payload: number) {
     super();
   }
 }
 
-class Decrement extends Action {
+class DecrementBy extends Action {
   constructor(public payload: number) {
     super();
   }
@@ -41,26 +47,35 @@ const initialState = {
 const initialState$ = of(initialState);
 const actions$ = actionQ.asObservable();
 
-const actionMap$ = of({
-  [Increment.name]: (state: State, action: Increment) => ({
-    ...state,
-    count: state.count + action.payload
-  }),
-  [Decrement.name]: (state: State, action: Decrement) => ({
-    ...state,
-    count: state.count - action.payload
-  })
+const incrementBy = (state: State, action: Increment) => ({
+  ...state,
+  count: state.count + action.payload
 });
 
-const store = new Store<State, ActionsUnion>({
+const decrementBy = (state: State, action: Decrement) => ({
+  ...state,
+  count: state.count - action.payload
+});
+
+const actionMap$ = of({
+  [IncrementBy.name]: incrementBy,
+  [DecrementBy.name]: decrementBy
+});
+
+const { state$ } = createStore<State, ActionsUnion>({
   initialState$,
   actions$,
   actionMap$
 });
 
-store.state$.pipe(select(state => state.count)).subscribe(console.log);
+const getCount = createSelector<State, State, number>(
+  state => state,
+  state => state.count
+);
 
-const add100 = new Increment(100);
+state$.pipe(select(getCount)).subscribe(console.log);
+
+const add100 = new IncrementBy(100);
 
 const add100times5 = interval(200).pipe(
   map(() => add100),
