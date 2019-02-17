@@ -189,8 +189,8 @@ function ofType() {
     });
 }
 
-var compose = function (fns) {
-    return fns.reduce(function (f, g) { return function () {
+var _pipe = function (fns) {
+    return fns.reduceRight(function (f, g) { return function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
@@ -227,7 +227,7 @@ function reducerFactory(actionMap, metaReducerMap) {
             return state;
         var reducer = actionMap[action.type];
         return hasMeta
-            ? compose(metaReducers)(reducer)(state, action)
+            ? _pipe(metaReducers)(reducer)(state, action)
             : reducer(state, action);
     };
 }
@@ -312,13 +312,12 @@ var Action = /** @class */ (function () {
 exports.createSelector = createSelector;
 exports.ofType = ofType;
 exports.select = select;
+exports.mapA = mapA;
+exports.mapS = mapS;
+exports.filterA = filterA;
+exports.filterS = filterS;
+exports.mapToObservable = mapToObservable;
+exports.catchErr = catchErr;
 exports.Store = Store;
 exports.createStore = createStore;
 exports.Action = Action;
-exports.compose = compose;
-exports.catchErr = catchErr;
-exports.mapToObservable = mapToObservable;
-exports.mapS = mapS;
-exports.mapA = mapA;
-exports.filterS = filterS;
-exports.filterA = filterA;

@@ -2,8 +2,8 @@ import { pipe, from, of, isObservable } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { ReducerFn, IAction } from './interfaces';
 
-export const compose = (fns: any[]) =>
-  fns.reduce((f, g) => (...args: any[]) => f(g(...args)));
+export const _pipe = (fns: any[]) =>
+  fns.reduceRight((f, g) => (...args: any[]) => f(g(...args)));
 
 export const catchErr = pipe(catchError(e => of(e)));
 

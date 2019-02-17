@@ -1,4 +1,4 @@
-import { compose } from './utils';
+import { _pipe } from './utils';
 import { MetaReducerMap, ActionMap } from './interfaces';
 import { Action } from './action';
 
@@ -23,7 +23,7 @@ export function reducerFactory<State, ActionsUnion extends Action>(
     const reducer = actionMap[action.type];
 
     return hasMeta
-      ? compose(metaReducers)(reducer)(state, action)
+      ? _pipe(metaReducers)(reducer)(state, action)
       : reducer(state, action);
   };
 }
