@@ -14,10 +14,10 @@ export declare class Store<State, ActionsUnion = any> {
     /**
      * Config defaults:
      *    actionMap$ = of({})
-     *    actions$ = never() (if not defined, no actions will be dispatched in the store)
+     *    actions$ = EMPTY (if not defined, no actions will be dispatched in the store)
      *    initialState$ = of({})
      *    metaReducers$ = of({})
-     *    destroy$ = never() (if not defined, the state subscription is never destroyed)
+     *    destroy$ = NEVER (if not defined, the state subscription is never destroyed)
      *
      * Options defaults:
      *    actions = concatMap (actions are executed in order of propagation)

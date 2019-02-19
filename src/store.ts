@@ -1,4 +1,4 @@
-import { Observable, combineLatest, of, never } from 'rxjs';
+import { Observable, combineLatest, of, EMPTY, NEVER } from 'rxjs';
 import {
   scan,
   startWith,
@@ -44,10 +44,10 @@ export class Store<State, ActionsUnion = any> {
   /**
    * Config defaults:
    *    actionMap$ = of({})
-   *    actions$ = never() (if not defined, no actions will be dispatched in the store)
+   *    actions$ = EMPTY (if not defined, no actions will be dispatched in the store)
    *    initialState$ = of({})
    *    metaReducers$ = of({})
-   *    destroy$ = never() (if not defined, the state subscription is never destroyed)
+   *    destroy$ = NEVER (if not defined, the state subscription is never destroyed)
    *
    * Options defaults:
    *    actions = concatMap (actions are executed in order of propagation)
@@ -65,7 +65,7 @@ export class Store<State, ActionsUnion = any> {
 
     const _actions$: Observable<AsyncType<ActionsUnion>> =
       (this.config && this.config.actions$ && this.config.actions$.pipe(catchErr)) ||
-      never();
+      EMPTY;
 
     const _initialState$: Observable<State> =
       (this.config &&
@@ -83,7 +83,7 @@ export class Store<State, ActionsUnion = any> {
       (this.config &&
         this.config.onDestroy$ &&
         this.config.onDestroy$.pipe(catchErr)) ||
-      never();
+      NEVER;
 
     const actionFop =
       FlattenOperators[

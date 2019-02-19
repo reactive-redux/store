@@ -247,10 +247,10 @@ var Store = /** @class */ (function () {
     /**
      * Config defaults:
      *    actionMap$ = of({})
-     *    actions$ = never() (if not defined, no actions will be dispatched in the store)
+     *    actions$ = EMPTY (if not defined, no actions will be dispatched in the store)
      *    initialState$ = of({})
      *    metaReducers$ = of({})
-     *    destroy$ = never() (if not defined, the state subscription is never destroyed)
+     *    destroy$ = NEVER (if not defined, the state subscription is never destroyed)
      *
      * Options defaults:
      *    actions = concatMap (actions are executed in order of propagation)
@@ -264,7 +264,7 @@ var Store = /** @class */ (function () {
             this.config.actionMap$.pipe(catchErr)) ||
             rxjs.of({});
         var _actions$ = (this.config && this.config.actions$ && this.config.actions$.pipe(catchErr)) ||
-            rxjs.never();
+            rxjs.EMPTY;
         var _initialState$ = (this.config &&
             this.config.initialState$ &&
             this.config.initialState$.pipe(catchErr)) ||
@@ -276,7 +276,7 @@ var Store = /** @class */ (function () {
         var _destroy$ = (this.config &&
             this.config.onDestroy$ &&
             this.config.onDestroy$.pipe(catchErr)) ||
-            rxjs.never();
+            rxjs.NEVER;
         var actionFop = FlattenOperators[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
         var stateFop = FlattenOperators[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
         this.state$ = rxjs.combineLatest(_actionMap$, _metaReducers$, _initialState$).pipe(operators.map(function (_a) {
