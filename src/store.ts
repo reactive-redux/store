@@ -23,6 +23,13 @@ import {
 } from './interfaces';
 import { mapToObservable, catchErr } from './utils';
 
+const FlattenOperators: { [key in FlattenOps]: any } = {
+  switchMap,
+  mergeMap,
+  concatMap,
+  exhaustMap
+};
+
 /**
  * State container based on RxJS observables
  *
@@ -32,22 +39,15 @@ import { mapToObservable, catchErr } from './utils';
  */
 
 export class Store<State, ActionsUnion = any> {
-  static readonly FlattenOperators: { [key in FlattenOps]: any } = {
-    switchMap,
-    mergeMap,
-    concatMap,
-    exhaustMap
-  };
-
   public state$: Observable<State>;
 
   /**
    * Config defaults:
    *    actionMap$ = of({})
-   *    actions$ = new Subject() (if not defined, no actions will be dispatched in the store)
+   *    actions$ = never() (if not defined, no actions will be dispatched in the store)
    *    initialState$ = of({})
    *    metaReducers$ = of({})
-   *    destroy$ = new Subject() (if not defined, the state subscription is never destroyed)
+   *    destroy$ = never() (if not defined, the state subscription is never destroyed)
    *
    * Options defaults:
    *    actions = concatMap (actions are executed in order of propagation)
@@ -86,12 +86,12 @@ export class Store<State, ActionsUnion = any> {
       never();
 
     const actionFop =
-      Store.FlattenOperators[
+      FlattenOperators[
         (this.options && this.options.actionFop) || FlattenOps.concatMap
       ];
 
     const stateFop =
-      Store.FlattenOperators[
+      FlattenOperators[
         (this.options && this.options.stateFop) || FlattenOps.switchMap
       ];
 
@@ -99,7 +99,7 @@ export class Store<State, ActionsUnion = any> {
       map(([map, meta, state]) => scan(reducerFactory(map, meta), state)),
       switchMap(reducer =>
         _actions$.pipe(
-          filter(a => !!a),
+          filter(a => !!a && typeof a === 'object'),
           mapToObservable,
           actionFop((a: Observable<ActionsUnion>) => a.pipe(catchErr)),
           reducer,

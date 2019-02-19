@@ -219,19 +219,23 @@ var filterA = function (predicate) { return function (reducer) { return function
 function reducerFactory(actionMap, metaReducerMap) {
     var metaReducers = Object.keys(metaReducerMap).map(function (key) { return metaReducerMap[key]; });
     var hasMeta = metaReducers.length > 0;
-    return function (state, action) {
+    return function reducer(state, action) {
         if (!(action.type &&
             typeof action.type === 'string' &&
             !!actionMap[action.type] &&
             typeof actionMap[action.type] === 'function'))
             return state;
-        var reducer = actionMap[action.type];
-        return hasMeta
-            ? _pipe(metaReducers)(reducer)(state, action)
-            : reducer(state, action);
+        var next = actionMap[action.type];
+        return hasMeta ? _pipe(metaReducers)(next)(state, action) : next(state, action);
     };
 }
 
+var FlattenOperators = {
+    switchMap: operators.switchMap,
+    mergeMap: operators.mergeMap,
+    concatMap: operators.concatMap,
+    exhaustMap: operators.exhaustMap
+};
 /**
  * State container based on RxJS observables
  *
@@ -243,10 +247,10 @@ var Store = /** @class */ (function () {
     /**
      * Config defaults:
      *    actionMap$ = of({})
-     *    actions$ = new Subject() (if not defined, no actions will be dispatched in the store)
+     *    actions$ = never() (if not defined, no actions will be dispatched in the store)
      *    initialState$ = of({})
      *    metaReducers$ = of({})
-     *    destroy$ = new Subject() (if not defined, the state subscription is never destroyed)
+     *    destroy$ = never() (if not defined, the state subscription is never destroyed)
      *
      * Options defaults:
      *    actions = concatMap (actions are executed in order of propagation)
@@ -273,22 +277,16 @@ var Store = /** @class */ (function () {
             this.config.onDestroy$ &&
             this.config.onDestroy$.pipe(catchErr)) ||
             rxjs.never();
-        var actionFop = Store.FlattenOperators[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
-        var stateFop = Store.FlattenOperators[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
+        var actionFop = FlattenOperators[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
+        var stateFop = FlattenOperators[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
         this.state$ = rxjs.combineLatest(_actionMap$, _metaReducers$, _initialState$).pipe(operators.map(function (_a) {
             var _b = __read(_a, 3), map = _b[0], meta = _b[1], state = _b[2];
             return operators.scan(reducerFactory(map, meta), state);
         }), operators.switchMap(function (reducer) {
-            return _actions$.pipe(operators.filter(function (a) { return !!a; }), mapToObservable, actionFop(function (a) { return a.pipe(catchErr); }), reducer, mapToObservable);
+            return _actions$.pipe(operators.filter(function (a) { return !!a && typeof a === 'object'; }), mapToObservable, actionFop(function (a) { return a.pipe(catchErr); }), reducer, mapToObservable);
         }), operators.startWith(_initialState$), stateFop(function (state) { return state.pipe(catchErr); }), operators.takeUntil(_destroy$), operators.shareReplay(1));
         this.state$.subscribe();
     }
-    Store.FlattenOperators = {
-        switchMap: operators.switchMap,
-        mergeMap: operators.mergeMap,
-        concatMap: operators.concatMap,
-        exhaustMap: operators.exhaustMap
-    };
     return Store;
 }());
 function createStore(config, opts) {

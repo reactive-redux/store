@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { FlattenOps, StoreConfig, StoreOptions } from './interfaces';
+import { StoreConfig, StoreOptions } from './interfaces';
 /**
  * State container based on RxJS observables
  *
@@ -10,17 +10,14 @@ import { FlattenOps, StoreConfig, StoreOptions } from './interfaces';
 export declare class Store<State, ActionsUnion = any> {
     private config?;
     private options?;
-    static readonly FlattenOperators: {
-        [key in FlattenOps]: any;
-    };
     state$: Observable<State>;
     /**
      * Config defaults:
      *    actionMap$ = of({})
-     *    actions$ = new Subject() (if not defined, no actions will be dispatched in the store)
+     *    actions$ = never() (if not defined, no actions will be dispatched in the store)
      *    initialState$ = of({})
      *    metaReducers$ = of({})
-     *    destroy$ = new Subject() (if not defined, the state subscription is never destroyed)
+     *    destroy$ = never() (if not defined, the state subscription is never destroyed)
      *
      * Options defaults:
      *    actions = concatMap (actions are executed in order of propagation)

@@ -9,7 +9,7 @@ export function reducerFactory<State, ActionsUnion extends Action>(
   const metaReducers = Object.keys(metaReducerMap).map(key => metaReducerMap[key]);
   const hasMeta = metaReducers.length > 0;
 
-  return (state: State, action: ActionsUnion) => {
+  return function reducer(state: State, action: ActionsUnion) {
     if (
       !(
         action.type &&
@@ -20,10 +20,8 @@ export function reducerFactory<State, ActionsUnion extends Action>(
     )
       return state;
 
-    const reducer = actionMap[action.type];
+    const next = actionMap[action.type];
 
-    return hasMeta
-      ? _pipe(metaReducers)(reducer)(state, action)
-      : reducer(state, action);
+    return hasMeta ? _pipe(metaReducers)(next)(state, action) : next(state, action);
   };
 }

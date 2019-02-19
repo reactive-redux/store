@@ -44,9 +44,6 @@ const initialState = {
   count: 0
 };
 
-const initialState$ = of(initialState);
-const actions$ = actionQ.asObservable();
-
 const incrementBy = (state: State, action: IncrementBy) => ({
   ...state,
   count: state.count + action.payload
@@ -57,6 +54,8 @@ const decrementBy = (state: State, action: DecrementBy) => ({
   count: state.count - action.payload
 });
 
+const initialState$ = of(initialState);
+const actions$ = actionQ.asObservable();
 const actionMap$ = of({
   [IncrementBy.name]: incrementBy,
   [DecrementBy.name]: decrementBy
@@ -73,8 +72,6 @@ const getCount = createSelector<State, State, number>(
   state => state.count
 );
 
-state$.pipe(select(getCount)).subscribe(console.log);
-
 const add100 = new IncrementBy(100);
 
 const add100times5 = interval(200).pipe(
@@ -82,7 +79,10 @@ const add100times5 = interval(200).pipe(
   take(5)
 );
 
+//dispaching an observable action
 actionQ.next(add100times5);
+
+state$.pipe(select(getCount)).subscribe(console.log);
 ```
 
 ## Changelog
