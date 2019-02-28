@@ -14,27 +14,32 @@ import { mapToObservable, flattenObservable, isObject } from './utils';
 import { getDefaults } from './defaults';
 
 /**
- * State container based on RxJS observables
- *
- *
+ * Reactive state container based on RxJS (https://rxjs.dev/)
  *
  * @class AsyncStore<State, ActionsUnion>
+ * 
+ * @type State - application state interface
+ * @type ActionsUnion - type union of all the actions
  */
-
 export class Store<State, ActionsUnion = any> {
   public state$: Observable<State>;
 
   /**
-   * Config defaults:
-   *    actionMap$ = of({})
-   *    actions$ = EMPTY (if not defined, no actions will be dispatched in the store)
-   *    initialState$ = of({})
-   *    metaReducers$ = of({})
-   *    destroy$ = NEVER (if not defined, the state subscription is never destroyed)
    *
-   * Options defaults:
-   *    actions = concatMap (actions are executed in order of propagation)
-   *    state = switchMap (will update to the latest received state, without waiting for previous async operations to finish)
+   * @param {Object} config  
+   *  {  
+   *     actionMap$: of({}),  
+   *     actions$: EMPTY, //(if not defined, no actions will be dispatched in the store)  
+   *     initialState$: of({}),  
+   *     metaReducers$: of({}),  
+   *     destroy$: NEVER //(if not defined, the state subscription will live forever)  
+   *  }
+   *
+   * @param {Object} options  
+   *  {  
+   *     actionFop: FlattenOps.concatMap, //(actions are executed in order of propagation)  
+   *     stateFop: FlattenOps.switchMap //(will update to the latest received state, without waiting for previous async operations to finish)  
+   *  }
    */
   constructor(
     private config?: StoreConfig<State, ActionsUnion>,
@@ -45,13 +50,13 @@ export class Store<State, ActionsUnion = any> {
       actions$,
       destroy$,
       initialState$,
-      metaReducers$,
+      transducers$,
       actionFop,
       stateFop
     } = getDefaults<State, ActionsUnion>(this.config, this.options);
 
-    this.state$ = combineLatest(actionMap$, metaReducers$, initialState$).pipe(
-      map(([map, meta, state]) => scan(reducerFactory(map, meta), state)),
+    this.state$ = combineLatest(actionMap$, transducers$, initialState$).pipe(
+      map(([map, transducers, state]) => scan(reducerFactory(map, transducers), state)),
       switchMap(scanReducer =>
         actions$.pipe(
           filter(isObject),

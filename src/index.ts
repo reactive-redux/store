@@ -1,5 +1,5 @@
 export { AsyncType, FlattenOps } from './interfaces';
-export { createSelector, ofType, select } from './selectors';
+export { createSelector, select } from './selectors';
 export { Store, createStore } from './store';
-export { Action } from './action';
-export { mapA, mapS, filterA, filterS } from './utils';
+export { Action, ofType } from './action';
+export { mapA, mapS, filterA, filterS } from './transducers';

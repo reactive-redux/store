@@ -1,12 +1,11 @@
 import { Observable, of, EMPTY, NEVER } from 'rxjs';
-
 import {
   ActionMap,
-  MetaReducerMap,
   AsyncType,
   FlattenOps,
   StoreConfig,
-  StoreOptions
+  StoreOptions,
+  TransducerMap
 } from './interfaces';
 import { catchErr } from './utils';
 import { switchMap, mergeMap, concatMap, exhaustMap } from 'rxjs/operators';
@@ -32,14 +31,14 @@ export function getDefaults<State, ActionsUnion>(
     (config && config.initialState$ && config.initialState$.pipe(catchErr)) ||
     of({});
 
-  const metaReducers$ =
+  const transducers$ =
     (config &&
-      config.metaReducers$ &&
-      config.metaReducers$.pipe<MetaReducerMap<State>>(catchErr)) ||
+      config.transducers$ &&
+      config.transducers$.pipe<TransducerMap<State>>(catchErr)) ||
     of({});
 
   const destroy$: Observable<boolean> =
-    (config && config.onDestroy$ && config.onDestroy$.pipe(catchErr)) || NEVER;
+    (config && config.destroy$ && config.destroy$.pipe(catchErr)) || NEVER;
 
   const actionFop =
     FlattenOperators[(options && options.actionFop) || FlattenOps.concatMap];
@@ -51,7 +50,7 @@ export function getDefaults<State, ActionsUnion>(
     actionMap$,
     actions$,
     initialState$,
-    metaReducers$,
+    transducers$,
     destroy$,
     actionFop,
     stateFop

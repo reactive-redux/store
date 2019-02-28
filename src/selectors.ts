@@ -1,6 +1,5 @@
-import { Observable, OperatorFunction } from 'rxjs';
-import { pluck, map, distinctUntilChanged, filter } from 'rxjs/operators';
-import { IAction } from './interfaces';
+import { Observable } from 'rxjs';
+import { pluck, map, distinctUntilChanged } from 'rxjs/operators';
 
 // ngrx selectors with overloading and memoization
 
@@ -757,13 +756,4 @@ export function select<T, Props, K>(
 
     return mapped$.pipe(distinctUntilChanged());
   };
-}
-
-export function ofType<T extends IAction>(
-  ...allowedTypes: string[]
-): OperatorFunction<IAction, T> {
-  return filter(
-    (action: IAction): action is T =>
-      allowedTypes.some(type => type === action.type)
-  );
 }

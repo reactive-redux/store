@@ -190,15 +190,6 @@ function select(pathOrMapFn, propsOrPath) {
         return mapped$.pipe(operators.distinctUntilChanged());
     };
 }
-function ofType() {
-    var allowedTypes = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        allowedTypes[_i] = arguments[_i];
-    }
-    return operators.filter(function (action) {
-        return allowedTypes.some(function (type) { return type === action.type; });
-    });
-}
 
 var isObject = function (value) { return value !== null && typeof value === 'object'; };
 var hasType = function (action) { return typeof action.type === 'string'; };
@@ -227,26 +218,17 @@ var mapToObservable = function () {
         return rxjs.of(value);
     }));
 };
-var mapS = function (mapFn) { return function (reducer) { return function (state, action) { return mapFn(reducer(state, action)); }; }; };
-var mapA = function (mapFn) { return function (reducer) { return function (state, action) { return reducer(state, mapFn(action)); }; }; };
-var filterS = function (predicate) { return function (reducer) { return function (state, action) {
-    var newState = reducer(state, action);
-    return predicate(newState) ? newState : state;
-}; }; };
-var filterA = function (predicate) { return function (reducer) { return function (state, action) {
-    return predicate(action) ? reducer(state, action) : state;
-}; }; };
 
-function reducerFactory(actionMap, metaReducerMap) {
-    var metaReducers = Object.keys(metaReducerMap).map(function (key) { return metaReducerMap[key]; });
-    var hasMeta = metaReducers.length > 0;
+function reducerFactory(actionMap, transducerMap) {
+    var transducers = Object.keys(transducerMap).map(function (key) { return transducerMap[key]; });
+    var hasT = transducers.length > 0;
     var map = __assign({}, actionMap);
     return function reducer(state, action) {
         if (!isValidAction(action, map))
             return state;
         var actionReducer = map[action.type];
-        return hasMeta
-            ? _pipe(metaReducers)(actionReducer)(state, action)
+        return hasT
+            ? _pipe(transducers)(actionReducer)(state, action)
             : actionReducer(state, action);
     };
 }
@@ -264,18 +246,18 @@ function getDefaults(config, options) {
     var actions$ = (config && config.actions$ && config.actions$.pipe(catchErr)) || rxjs.EMPTY;
     var initialState$ = (config && config.initialState$ && config.initialState$.pipe(catchErr)) ||
         rxjs.of({});
-    var metaReducers$ = (config &&
-        config.metaReducers$ &&
-        config.metaReducers$.pipe(catchErr)) ||
+    var transducers$ = (config &&
+        config.transducers$ &&
+        config.transducers$.pipe(catchErr)) ||
         rxjs.of({});
-    var destroy$ = (config && config.onDestroy$ && config.onDestroy$.pipe(catchErr)) || rxjs.NEVER;
+    var destroy$ = (config && config.destroy$ && config.destroy$.pipe(catchErr)) || rxjs.NEVER;
     var actionFop = FlattenOperators[(options && options.actionFop) || exports.FlattenOps.concatMap];
     var stateFop = FlattenOperators[(options && options.stateFop) || exports.FlattenOps.switchMap];
     return {
         actionMap$: actionMap$,
         actions$: actions$,
         initialState$: initialState$,
-        metaReducers$: metaReducers$,
+        transducers$: transducers$,
         destroy$: destroy$,
         actionFop: actionFop,
         stateFop: stateFop
@@ -283,32 +265,38 @@ function getDefaults(config, options) {
 }
 
 /**
- * State container based on RxJS observables
- *
- *
+ * Reactive state container based on RxJS (https://rxjs.dev/)
  *
  * @class AsyncStore<State, ActionsUnion>
+ *
+ * @type State - application state interface
+ * @type ActionsUnion - type union of all the actions
  */
 var Store = /** @class */ (function () {
     /**
-     * Config defaults:
-     *    actionMap$ = of({})
-     *    actions$ = EMPTY (if not defined, no actions will be dispatched in the store)
-     *    initialState$ = of({})
-     *    metaReducers$ = of({})
-     *    destroy$ = NEVER (if not defined, the state subscription is never destroyed)
      *
-     * Options defaults:
-     *    actions = concatMap (actions are executed in order of propagation)
-     *    state = switchMap (will update to the latest received state, without waiting for previous async operations to finish)
+     * @param {Object} config
+     *  {
+     *     actionMap$: of({}),
+     *     actions$: EMPTY, //(if not defined, no actions will be dispatched in the store)
+     *     initialState$: of({}),
+     *     metaReducers$: of({}),
+     *     destroy$: NEVER //(if not defined, the state subscription will live forever)
+     *  }
+     *
+     * @param {Object} options
+     *  {
+     *     actionFop: FlattenOps.concatMap, //(actions are executed in order of propagation)
+     *     stateFop: FlattenOps.switchMap //(will update to the latest received state, without waiting for previous async operations to finish)
+     *  }
      */
     function Store(config, options) {
         this.config = config;
         this.options = options;
-        var _a = getDefaults(this.config, this.options), actionMap$ = _a.actionMap$, actions$ = _a.actions$, destroy$ = _a.destroy$, initialState$ = _a.initialState$, metaReducers$ = _a.metaReducers$, actionFop = _a.actionFop, stateFop = _a.stateFop;
-        this.state$ = rxjs.combineLatest(actionMap$, metaReducers$, initialState$).pipe(operators.map(function (_a) {
-            var _b = __read(_a, 3), map = _b[0], meta = _b[1], state = _b[2];
-            return operators.scan(reducerFactory(map, meta), state);
+        var _a = getDefaults(this.config, this.options), actionMap$ = _a.actionMap$, actions$ = _a.actions$, destroy$ = _a.destroy$, initialState$ = _a.initialState$, transducers$ = _a.transducers$, actionFop = _a.actionFop, stateFop = _a.stateFop;
+        this.state$ = rxjs.combineLatest(actionMap$, transducers$, initialState$).pipe(operators.map(function (_a) {
+            var _b = __read(_a, 3), map = _b[0], transducers = _b[1], state = _b[2];
+            return operators.scan(reducerFactory(map, transducers), state);
         }), operators.switchMap(function (scanReducer) {
             return actions$.pipe(operators.filter(isObject), mapToObservable(), actionFop(flattenObservable), scanReducer, mapToObservable());
         }), operators.startWith(initialState$), stateFop(flattenObservable), operators.takeUntil(destroy$), operators.shareReplay(1));
@@ -333,13 +321,51 @@ var Action = /** @class */ (function () {
     });
     return Action;
 }());
+function ofType() {
+    var allowedTypes = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        allowedTypes[_i] = arguments[_i];
+    }
+    return operators.filter(function (action) {
+        return allowedTypes.some(function (type) { return type === action.type; });
+    });
+}
+
+/**
+ *
+ * @param mapFn - a function to map a state with
+ * @returns {TransducerFn} TransducerFn<State>
+ */
+var mapS = function (mapFn) { return function (reducer) { return function (state, action) { return mapFn(reducer(state, action)); }; }; };
+/**
+ *
+ * @param mapFn - a function to map an action with
+ * @returns {TransducerFn} TransducerFn<State>
+ */
+var mapA = function (mapFn) { return function (reducer) { return function (state, action) { return reducer(state, mapFn(action)); }; }; };
+/**
+ *
+ * @param filterFn - a function to filter a state with
+ * @returns {TransducerFn} TransducerFn<State>
+ */
+var filterS = function (filterFn) { return function (reducer) { return function (state, action) {
+    return filterFn(state) ? reducer(state, action) : state;
+}; }; };
+/**
+ *
+ * @param filterFn - a function to filter an action with
+ * @returns {TransducerFn} TransducerFn<State>
+ */
+var filterA = function (filterFn) { return function (reducer) { return function (state, action) {
+    return filterFn(action) ? reducer(state, action) : state;
+}; }; };
 
 exports.createSelector = createSelector;
-exports.ofType = ofType;
 exports.select = select;
 exports.Store = Store;
 exports.createStore = createStore;
 exports.Action = Action;
+exports.ofType = ofType;
 exports.mapA = mapA;
 exports.mapS = mapS;
 exports.filterA = filterA;

@@ -11,8 +11,8 @@ export interface StoreConfig<State, ActionsUnion> {
   actionMap$?: Observable<ActionMap<State>>;
   actions$?: Observable<AsyncType<ActionsUnion>>;
   initialState$?: Observable<State>;
-  metaReducers$?: Observable<MetaReducerMap<State>>;
-  onDestroy$?: Observable<boolean>;
+  transducers$?: Observable<TransducerMap<State>>;
+  destroy$?: Observable<boolean>;
 }
 
 export interface StoreOptions {
@@ -33,8 +33,8 @@ export type ActionMap<State> = {
   [key: string]: ReducerFn<State>;
 };
 
-export type MetaReducerFn<State> = (reducer: ReducerFn<State>) => ReducerFn<State>;
+export type TransducerFn<State> = (reducer: ReducerFn<State>) => ReducerFn<State>;
 
-export type MetaReducerMap<T> = {
-  [key: string]: MetaReducerFn<T>;
+export type TransducerMap<T> = {
+  [key: string]: TransducerFn<T>;
 };
