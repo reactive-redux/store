@@ -200,14 +200,13 @@ function ofType() {
     });
 }
 
-function isAction(action) {
-    return (typeof action === 'object' && action.type && typeof action.type === 'string');
-}
-function isValidAction(action, map) {
-    return (isAction(action) &&
+var isObject = function (value) { return value !== null && typeof value === 'object'; };
+var hasType = function (action) { return typeof action.type === 'string'; };
+var isValidAction = function (action, map) {
+    return hasType(action) &&
         map.hasOwnProperty(action.type) &&
-        typeof map[action.type] === 'function');
-}
+        typeof map[action.type] === 'function';
+};
 var _pipe = function (fns) {
     return fns.reduceRight(function (f, g) { return function () {
         var args = [];
@@ -219,7 +218,7 @@ var _pipe = function (fns) {
 };
 var catchErr = rxjs.pipe(operators.catchError(function (e) { return rxjs.of(e); }));
 var flattenObservable = function (o) { return o.pipe(catchErr); };
-function mapToObservable() {
+var mapToObservable = function () {
     return rxjs.pipe(operators.map(function (value) {
         if (rxjs.isObservable(value))
             return value;
@@ -227,7 +226,7 @@ function mapToObservable() {
             return rxjs.from(value);
         return rxjs.of(value);
     }));
-}
+};
 var mapS = function (mapFn) { return function (reducer) { return function (state, action) { return mapFn(reducer(state, action)); }; }; };
 var mapA = function (mapFn) { return function (reducer) { return function (state, action) { return reducer(state, mapFn(action)); }; }; };
 var filterS = function (predicate) { return function (reducer) { return function (state, action) {
@@ -311,7 +310,7 @@ var Store = /** @class */ (function () {
             var _b = __read(_a, 3), map = _b[0], meta = _b[1], state = _b[2];
             return operators.scan(reducerFactory(map, meta), state);
         }), operators.switchMap(function (scanReducer) {
-            return actions$.pipe(operators.filter(function (a) { return typeof a === 'object'; }), mapToObservable(), actionFop(flattenObservable), scanReducer, mapToObservable());
+            return actions$.pipe(operators.filter(isObject), mapToObservable(), actionFop(flattenObservable), scanReducer, mapToObservable());
         }), operators.startWith(initialState$), stateFop(flattenObservable), operators.takeUntil(destroy$), operators.shareReplay(1));
         this.state$.subscribe();
     }
@@ -345,5 +344,3 @@ exports.mapA = mapA;
 exports.mapS = mapS;
 exports.filterA = filterA;
 exports.filterS = filterS;
-exports.mapToObservable = mapToObservable;
-exports.catchErr = catchErr;
