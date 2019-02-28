@@ -1,4 +1,4 @@
-import { _pipe } from './utils';
+import { _pipe, isValidAction } from './utils';
 import { MetaReducerMap, ActionMap } from './interfaces';
 import { Action } from './action';
 
@@ -8,20 +8,15 @@ export function reducerFactory<State, ActionsUnion extends Action>(
 ) {
   const metaReducers = Object.keys(metaReducerMap).map(key => metaReducerMap[key]);
   const hasMeta = metaReducers.length > 0;
+  const map = { ...actionMap };
 
   return function reducer(state: State, action: ActionsUnion) {
-    if (
-      !(
-        action.type &&
-        typeof action.type === 'string' &&
-        !!actionMap[action.type] &&
-        typeof actionMap[action.type] === 'function'
-      )
-    )
-      return state;
+    if (!isValidAction(action, map)) return state;
 
-    const next = actionMap[action.type];
+    const actionReducer = map[action.type];
 
-    return hasMeta ? _pipe(metaReducers)(next)(state, action) : next(state, action);
+    return hasMeta
+      ? _pipe(metaReducers)(actionReducer)(state, action)
+      : actionReducer(state, action);
   };
 }

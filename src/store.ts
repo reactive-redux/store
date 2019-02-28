@@ -1,4 +1,4 @@
-import { Observable, combineLatest, of, EMPTY, NEVER } from 'rxjs';
+import { Observable, combineLatest } from 'rxjs';
 import {
   scan,
   startWith,
@@ -6,29 +6,12 @@ import {
   takeUntil,
   switchMap,
   map,
-  concatMap,
-  mergeMap,
-  exhaustMap,
   filter
 } from 'rxjs/operators';
-
 import { reducerFactory } from './reducer.factory';
-import {
-  MetaReducerMap,
-  FlattenOps,
-  AsyncType,
-  ActionMap,
-  StoreConfig,
-  StoreOptions
-} from './interfaces';
-import { mapToObservable, catchErr } from './utils';
-
-const FlattenOperators: { [key in FlattenOps]: any } = {
-  switchMap,
-  mergeMap,
-  concatMap,
-  exhaustMap
-};
+import { StoreConfig, StoreOptions } from './interfaces';
+import { mapToObservable, catchErr, isAction } from './utils';
+import { getDefaults } from './defaults';
 
 /**
  * State container based on RxJS observables
@@ -57,58 +40,30 @@ export class Store<State, ActionsUnion = any> {
     private config?: StoreConfig<State, ActionsUnion>,
     private options?: StoreOptions
   ) {
-    const _actionMap$: Observable<ActionMap<State>> =
-      (this.config &&
-        this.config.actionMap$ &&
-        this.config.actionMap$.pipe(catchErr)) ||
-      of({});
+    const {
+      actionMap$,
+      actions$,
+      destroy$,
+      initialState$,
+      metaReducers$,
+      actionFop,
+      stateFop
+    } = getDefaults<State, ActionsUnion>(this.config, this.options);
 
-    const _actions$: Observable<AsyncType<ActionsUnion>> =
-      (this.config && this.config.actions$ && this.config.actions$.pipe(catchErr)) ||
-      EMPTY;
-
-    const _initialState$: Observable<State> =
-      (this.config &&
-        this.config.initialState$ &&
-        this.config.initialState$.pipe(catchErr)) ||
-      of({});
-
-    const _metaReducers$ =
-      (this.config &&
-        this.config.metaReducers$ &&
-        this.config.metaReducers$.pipe<MetaReducerMap<State>>(catchErr)) ||
-      of({});
-
-    const _destroy$: Observable<boolean> =
-      (this.config &&
-        this.config.onDestroy$ &&
-        this.config.onDestroy$.pipe(catchErr)) ||
-      NEVER;
-
-    const actionFop =
-      FlattenOperators[
-        (this.options && this.options.actionFop) || FlattenOps.concatMap
-      ];
-
-    const stateFop =
-      FlattenOperators[
-        (this.options && this.options.stateFop) || FlattenOps.switchMap
-      ];
-
-    this.state$ = combineLatest(_actionMap$, _metaReducers$, _initialState$).pipe(
+    this.state$ = combineLatest(actionMap$, metaReducers$, initialState$).pipe(
       map(([map, meta, state]) => scan(reducerFactory(map, meta), state)),
-      switchMap(reducer =>
-        _actions$.pipe(
-          filter(a => !!a && typeof a === 'object'),
+      switchMap(scanReducer =>
+        actions$.pipe(
+          filter(isAction),
           mapToObservable,
           actionFop((a: Observable<ActionsUnion>) => a.pipe(catchErr)),
-          reducer,
+          scanReducer,
           mapToObservable
         )
       ),
-      startWith(_initialState$),
+      startWith(initialState$),
       stateFop((state: Observable<State>) => state.pipe(catchErr)),
-      takeUntil<State>(_destroy$),
+      takeUntil<State>(destroy$),
       shareReplay(1)
     );
 

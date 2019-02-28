@@ -2,6 +2,19 @@ import { pipe, from, of, isObservable } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { ReducerFn, IAction } from './interfaces';
 
+export function isAction(action: any) {
+  return (
+    typeof action === 'object' && action.type && typeof action.type === 'string'
+  );
+}
+
+export function isValidAction(
+  action: IAction,
+  map: { [key: string]: ReducerFn<any> }
+) {
+  return map.hasOwnProperty(action.type) && typeof map[action.type] === 'function';
+}
+
 export const _pipe = (fns: any[]) =>
   fns.reduceRight((f, g) => (...args: any[]) => f(g(...args)));
 

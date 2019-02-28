@@ -1,4 +1,8 @@
 import { ReducerFn, IAction } from './interfaces';
+export declare function isAction(action: any): boolean;
+export declare function isValidAction(action: IAction, map: {
+    [key: string]: ReducerFn<any>;
+}): boolean;
 export declare const _pipe: (fns: any[]) => any;
 export declare const catchErr: import("rxjs").UnaryFunction<import("rxjs").Observable<{}>, import("rxjs").Observable<any>>;
 export declare const mapToObservable: import("rxjs").UnaryFunction<import("rxjs").Observable<{}>, import("rxjs").Observable<import("rxjs").Observable<any>>>;

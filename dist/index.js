@@ -27,6 +27,17 @@ See the Apache Version 2.0 License for specific language governing permissions
 and limitations under the License.
 ***************************************************************************** */
 
+var __assign = function() {
+    __assign = Object.assign || function __assign(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+
 function __read(o, n) {
     var m = typeof Symbol === "function" && o[Symbol.iterator];
     if (!m) return o;
@@ -189,6 +200,12 @@ function ofType() {
     });
 }
 
+function isAction(action) {
+    return (typeof action === 'object' && action.type && typeof action.type === 'string');
+}
+function isValidAction(action, map) {
+    return map.hasOwnProperty(action.type) && typeof map[action.type] === 'function';
+}
 var _pipe = function (fns) {
     return fns.reduceRight(function (f, g) { return function () {
         var args = [];
@@ -219,14 +236,14 @@ var filterA = function (predicate) { return function (reducer) { return function
 function reducerFactory(actionMap, metaReducerMap) {
     var metaReducers = Object.keys(metaReducerMap).map(function (key) { return metaReducerMap[key]; });
     var hasMeta = metaReducers.length > 0;
+    var map = __assign({}, actionMap);
     return function reducer(state, action) {
-        if (!(action.type &&
-            typeof action.type === 'string' &&
-            !!actionMap[action.type] &&
-            typeof actionMap[action.type] === 'function'))
+        if (!isValidAction(action, map))
             return state;
-        var next = actionMap[action.type];
-        return hasMeta ? _pipe(metaReducers)(next)(state, action) : next(state, action);
+        var actionReducer = map[action.type];
+        return hasMeta
+            ? _pipe(metaReducers)(actionReducer)(state, action)
+            : actionReducer(state, action);
     };
 }
 
@@ -236,6 +253,31 @@ var FlattenOperators = {
     concatMap: operators.concatMap,
     exhaustMap: operators.exhaustMap
 };
+function getDefaults(config, options) {
+    if (config === void 0) { config = {}; }
+    if (options === void 0) { options = {}; }
+    var actionMap$ = (config && config.actionMap$ && config.actionMap$.pipe(catchErr)) || rxjs.of({});
+    var actions$ = (config && config.actions$ && config.actions$.pipe(catchErr)) || rxjs.EMPTY;
+    var initialState$ = (config && config.initialState$ && config.initialState$.pipe(catchErr)) ||
+        rxjs.of({});
+    var metaReducers$ = (config &&
+        config.metaReducers$ &&
+        config.metaReducers$.pipe(catchErr)) ||
+        rxjs.of({});
+    var destroy$ = (config && config.onDestroy$ && config.onDestroy$.pipe(catchErr)) || rxjs.NEVER;
+    var actionFop = FlattenOperators[(options && options.actionFop) || exports.FlattenOps.concatMap];
+    var stateFop = FlattenOperators[(options && options.stateFop) || exports.FlattenOps.switchMap];
+    return {
+        actionMap$: actionMap$,
+        actions$: actions$,
+        initialState$: initialState$,
+        metaReducers$: metaReducers$,
+        destroy$: destroy$,
+        actionFop: actionFop,
+        stateFop: stateFop
+    };
+}
+
 /**
  * State container based on RxJS observables
  *
@@ -259,32 +301,13 @@ var Store = /** @class */ (function () {
     function Store(config, options) {
         this.config = config;
         this.options = options;
-        var _actionMap$ = (this.config &&
-            this.config.actionMap$ &&
-            this.config.actionMap$.pipe(catchErr)) ||
-            rxjs.of({});
-        var _actions$ = (this.config && this.config.actions$ && this.config.actions$.pipe(catchErr)) ||
-            rxjs.EMPTY;
-        var _initialState$ = (this.config &&
-            this.config.initialState$ &&
-            this.config.initialState$.pipe(catchErr)) ||
-            rxjs.of({});
-        var _metaReducers$ = (this.config &&
-            this.config.metaReducers$ &&
-            this.config.metaReducers$.pipe(catchErr)) ||
-            rxjs.of({});
-        var _destroy$ = (this.config &&
-            this.config.onDestroy$ &&
-            this.config.onDestroy$.pipe(catchErr)) ||
-            rxjs.NEVER;
-        var actionFop = FlattenOperators[(this.options && this.options.actionFop) || exports.FlattenOps.concatMap];
-        var stateFop = FlattenOperators[(this.options && this.options.stateFop) || exports.FlattenOps.switchMap];
-        this.state$ = rxjs.combineLatest(_actionMap$, _metaReducers$, _initialState$).pipe(operators.map(function (_a) {
+        var _a = getDefaults(this.config, this.options), actionMap$ = _a.actionMap$, actions$ = _a.actions$, destroy$ = _a.destroy$, initialState$ = _a.initialState$, metaReducers$ = _a.metaReducers$, actionFop = _a.actionFop, stateFop = _a.stateFop;
+        this.state$ = rxjs.combineLatest(actionMap$, metaReducers$, initialState$).pipe(operators.map(function (_a) {
             var _b = __read(_a, 3), map = _b[0], meta = _b[1], state = _b[2];
             return operators.scan(reducerFactory(map, meta), state);
-        }), operators.switchMap(function (reducer) {
-            return _actions$.pipe(operators.filter(function (a) { return !!a && typeof a === 'object'; }), mapToObservable, actionFop(function (a) { return a.pipe(catchErr); }), reducer, mapToObservable);
-        }), operators.startWith(_initialState$), stateFop(function (state) { return state.pipe(catchErr); }), operators.takeUntil(_destroy$), operators.shareReplay(1));
+        }), operators.switchMap(function (scanReducer) {
+            return actions$.pipe(operators.filter(isAction), mapToObservable, actionFop(function (a) { return a.pipe(catchErr); }), scanReducer, mapToObservable);
+        }), operators.startWith(initialState$), stateFop(function (state) { return state.pipe(catchErr); }), operators.takeUntil(destroy$), operators.shareReplay(1));
         this.state$.subscribe();
     }
     return Store;
@@ -310,12 +333,12 @@ var Action = /** @class */ (function () {
 exports.createSelector = createSelector;
 exports.ofType = ofType;
 exports.select = select;
+exports.Store = Store;
+exports.createStore = createStore;
+exports.Action = Action;
 exports.mapA = mapA;
 exports.mapS = mapS;
 exports.filterA = filterA;
 exports.filterS = filterS;
 exports.mapToObservable = mapToObservable;
 exports.catchErr = catchErr;
-exports.Store = Store;
-exports.createStore = createStore;
-exports.Action = Action;
