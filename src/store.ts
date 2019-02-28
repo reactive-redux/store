@@ -10,7 +10,7 @@ import {
 } from 'rxjs/operators';
 import { reducerFactory } from './reducer.factory';
 import { StoreConfig, StoreOptions } from './interfaces';
-import { mapToObservable, catchErr, isAction } from './utils';
+import { mapToObservable, flattenObservable } from './utils';
 import { getDefaults } from './defaults';
 
 /**
@@ -54,15 +54,15 @@ export class Store<State, ActionsUnion = any> {
       map(([map, meta, state]) => scan(reducerFactory(map, meta), state)),
       switchMap(scanReducer =>
         actions$.pipe(
-          filter(isAction),
-          mapToObservable,
-          actionFop((a: Observable<ActionsUnion>) => a.pipe(catchErr)),
+          filter(a => typeof a === 'object'),
+          mapToObservable(),
+          actionFop(flattenObservable),
           scanReducer,
-          mapToObservable
+          mapToObservable()
         )
       ),
       startWith(initialState$),
-      stateFop((state: Observable<State>) => state.pipe(catchErr)),
+      stateFop(flattenObservable),
       takeUntil<State>(destroy$),
       shareReplay(1)
     );

@@ -204,7 +204,9 @@ function isAction(action) {
     return (typeof action === 'object' && action.type && typeof action.type === 'string');
 }
 function isValidAction(action, map) {
-    return map.hasOwnProperty(action.type) && typeof map[action.type] === 'function';
+    return (isAction(action) &&
+        map.hasOwnProperty(action.type) &&
+        typeof map[action.type] === 'function');
 }
 var _pipe = function (fns) {
     return fns.reduceRight(function (f, g) { return function () {
@@ -216,13 +218,16 @@ var _pipe = function (fns) {
     }; });
 };
 var catchErr = rxjs.pipe(operators.catchError(function (e) { return rxjs.of(e); }));
-var mapToObservable = rxjs.pipe(operators.map(function (value) {
-    if (rxjs.isObservable(value))
-        return value;
-    if (value instanceof Promise)
-        return rxjs.from(value);
-    return rxjs.of(value);
-}));
+var flattenObservable = function (o) { return o.pipe(catchErr); };
+function mapToObservable() {
+    return rxjs.pipe(operators.map(function (value) {
+        if (rxjs.isObservable(value))
+            return value;
+        if (value instanceof Promise)
+            return rxjs.from(value);
+        return rxjs.of(value);
+    }));
+}
 var mapS = function (mapFn) { return function (reducer) { return function (state, action) { return mapFn(reducer(state, action)); }; }; };
 var mapA = function (mapFn) { return function (reducer) { return function (state, action) { return reducer(state, mapFn(action)); }; }; };
 var filterS = function (predicate) { return function (reducer) { return function (state, action) {
@@ -306,8 +311,8 @@ var Store = /** @class */ (function () {
             var _b = __read(_a, 3), map = _b[0], meta = _b[1], state = _b[2];
             return operators.scan(reducerFactory(map, meta), state);
         }), operators.switchMap(function (scanReducer) {
-            return actions$.pipe(operators.filter(isAction), mapToObservable, actionFop(function (a) { return a.pipe(catchErr); }), scanReducer, mapToObservable);
-        }), operators.startWith(initialState$), stateFop(function (state) { return state.pipe(catchErr); }), operators.takeUntil(destroy$), operators.shareReplay(1));
+            return actions$.pipe(operators.filter(function (a) { return typeof a === 'object'; }), mapToObservable(), actionFop(flattenObservable), scanReducer, mapToObservable());
+        }), operators.startWith(initialState$), stateFop(flattenObservable), operators.takeUntil(destroy$), operators.shareReplay(1));
         this.state$.subscribe();
     }
     return Store;
