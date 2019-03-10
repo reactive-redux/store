@@ -340,7 +340,7 @@ var mapS = function (mapFn) { return function (reducer) { return function (state
 /**
  *
  * @param mapFn - a function to map an action with
- * @returns {TransducerFn} TransducerFn<State>
+ * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
  */
 var mapA = function (mapFn) { return function (reducer) { return function (state, action) { return reducer(state, mapFn(action)); }; }; };
 /**
@@ -354,7 +354,7 @@ var filterS = function (filterFn) { return function (reducer) { return function 
 /**
  *
  * @param filterFn - a function to filter an action with
- * @returns {TransducerFn} TransducerFn<State>
+ * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
  */
 var filterA = function (filterFn) { return function (reducer) { return function (state, action) {
     return filterFn(action) ? reducer(state, action) : state;

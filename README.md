@@ -74,13 +74,13 @@ const getCount = createSelector<State, State, number>(
 
 const add100 = new IncrementBy(100);
 
-const add100times5 = interval(200).pipe(
+const add100times = n => interval(200).pipe(
   map(() => add100),
-  take(5)
+  take(n)
 );
 
 //dispaching an observable action
-actionQ.next(add100times5);
+actionQ.next(add100times(10));
 
 state$.pipe(select(getCount)).subscribe(console.log);
 ```

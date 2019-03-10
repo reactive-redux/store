@@ -6,7 +6,7 @@ export const isObject = (value: any) => value !== null && typeof value === 'obje
 
 export const hasType = (action: any) => typeof action.type === 'string';
 
-export const isValidAction = (action: IAction, map: ActionMap<any>) =>
+export const isValidAction = (action: any, map: ActionMap<any>) =>
   hasType(action) &&
   map.hasOwnProperty(action.type) &&
   typeof map[action.type] === 'function';
