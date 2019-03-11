@@ -5,12 +5,12 @@ Object.defineProperty(exports, '__esModule', { value: true });
 var operators = require('rxjs/operators');
 var rxjs = require('rxjs');
 
-(function (FlattenOps) {
-    FlattenOps["switchMap"] = "switchMap";
-    FlattenOps["mergeMap"] = "mergeMap";
-    FlattenOps["concatMap"] = "concatMap";
-    FlattenOps["exhaustMap"] = "exhaustMap";
-})(exports.FlattenOps || (exports.FlattenOps = {}));
+(function (FlattenOperators) {
+    FlattenOperators["switchMap"] = "switchMap";
+    FlattenOperators["mergeMap"] = "mergeMap";
+    FlattenOperators["concatMap"] = "concatMap";
+    FlattenOperators["exhaustMap"] = "exhaustMap";
+})(exports.FlattenOperators || (exports.FlattenOperators = {}));
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -233,7 +233,7 @@ function reducerFactory(actionMap, transducerMap) {
     };
 }
 
-var FlattenOperators = {
+var fop = {
     switchMap: operators.switchMap,
     mergeMap: operators.mergeMap,
     concatMap: operators.concatMap,
@@ -251,8 +251,8 @@ function getDefaults(config, options) {
         config.transducers$.pipe(catchErr)) ||
         rxjs.of({});
     var destroy$ = (config && config.destroy$ && config.destroy$.pipe(catchErr)) || rxjs.NEVER;
-    var actionFop = FlattenOperators[(options && options.actionFop) || exports.FlattenOps.concatMap];
-    var stateFop = FlattenOperators[(options && options.stateFop) || exports.FlattenOps.switchMap];
+    var actionFop = fop[(options && options.actionFop) || exports.FlattenOperators.concatMap];
+    var stateFop = fop[(options && options.stateFop) || exports.FlattenOperators.switchMap];
     return {
         actionMap$: actionMap$,
         actions$: actions$,
@@ -335,8 +335,12 @@ function ofType() {
  *
  * @param mapFn - a function to map a state with
  * @returns {TransducerFn} TransducerFn<State>
+ *
+ * PS - previous state
+ * NS - next state
  */
-var mapS = function (mapFn) { return function (reducer) { return function (state, action) { return mapFn(reducer(state, action)); }; }; };
+var mapPS = function (mapFn) { return function (reducer) { return function (state, action) { return reducer(mapFn(state), action); }; }; };
+var mapNS = function (mapFn) { return function (reducer) { return function (state, action) { return mapFn(reducer(state, action)); }; }; };
 /**
  *
  * @param mapFn - a function to map an action with
@@ -347,9 +351,16 @@ var mapA = function (mapFn) { return function (reducer) { return function (state
  *
  * @param filterFn - a function to filter a state with
  * @returns {TransducerFn} TransducerFn<State>
+ *
+ * PS - previous state
+ * NS - next state
  */
-var filterS = function (filterFn) { return function (reducer) { return function (state, action) {
+var filterPS = function (filterFn) { return function (reducer) { return function (state, action) {
     return filterFn(state) ? reducer(state, action) : state;
+}; }; };
+var filterNS = function (filterFn) { return function (reducer) { return function (state, action) {
+    var nextState = reducer(state, action);
+    return filterFn(nextState) ? nextState : state;
 }; }; };
 /**
  *
@@ -359,6 +370,28 @@ var filterS = function (filterFn) { return function (reducer) { return function 
 var filterA = function (filterFn) { return function (reducer) { return function (state, action) {
     return filterFn(action) ? reducer(state, action) : state;
 }; }; };
+/**
+ *
+ * @param reduceFn - a function to reduce the state and action together
+ * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
+ *
+ * PS - previous state
+ * NS - next state
+ */
+var reducePS = function (reducerFn) { return function (reducer) { return function (state, action) {
+    return reducer(reducerFn(state, action), action);
+}; }; };
+var reduceNS = function (reducerFn) { return function (reducer) { return function (state, action) {
+    return reducerFn(reducer(state, action), action);
+}; }; };
+/**
+ *
+ * @param reduceFn - a function to reduce the state and action together
+ * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
+ */
+var reduceA = function (reducerFn) { return function (reducer) { return function (state, action) {
+    return reducer(state, reducerFn(state, action));
+}; }; };
 
 exports.createSelector = createSelector;
 exports.select = select;
@@ -366,7 +399,12 @@ exports.Store = Store;
 exports.createStore = createStore;
 exports.Action = Action;
 exports.ofType = ofType;
+exports.mapPS = mapPS;
+exports.mapNS = mapNS;
 exports.mapA = mapA;
-exports.mapS = mapS;
+exports.filterPS = filterPS;
+exports.filterNS = filterNS;
 exports.filterA = filterA;
-exports.filterS = filterS;
+exports.reducePS = reducePS;
+exports.reduceNS = reduceNS;
+exports.reduceA = reduceA;

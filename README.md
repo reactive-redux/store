@@ -14,75 +14,50 @@ import { map, take } from 'rxjs/operators';
 import {
   Action,
   AsyncType,
-  select,
-  createSelector,
   createStore
 } from '@reactive-redux/store';
 
 //Counter example
-interface State {
-  count: number;
-}
-
-class IncrementBy extends Action {
-  constructor(public payload: number) {
-    super();
-  }
-}
-
-class DecrementBy extends Action {
-  constructor(public payload: number) {
-    super();
-  }
-}
-
-type ActionsUnion = IncrementBy | DecrementBy;
-
+type State = number;
+ 
+class Increment extends Action {}
+ 
+class Decrement extends Action {}
+ 
+type ActionsUnion = Increment | Decrement;
+ 
 const actionQ = new Subject<AsyncType<ActionsUnion>>();
-
-const initialState = {
-  count: 0
-};
-
-const incrementBy = (state: State, action: IncrementBy) => ({
-  ...state,
-  count: state.count + action.payload
-});
-
-const decrementBy = (state: State, action: DecrementBy) => ({
-  ...state,
-  count: state.count - action.payload
-});
-
+ 
+const initialState = 0;
+ 
+const increment = (state: State, action: Increment) => state + 1;
+ 
+const decrement = (state: State, action: Decrement) => state - 1;
+ 
 const initialState$ = of(initialState);
 const actions$ = actionQ.asObservable();
 const actionMap$ = of({
-  [IncrementBy.name]: incrementBy,
-  [DecrementBy.name]: decrementBy
+  [Increment.name]: increment,
+  [Decrement.name]: decrement
 });
-
-const { state$ } = createStore<State, ActionsUnion>({
+ 
+const { state$ } = createStore<State, AsyncType<ActionsUnion>>({
   initialState$,
   actions$,
-  actionMap$
+  actionMap$ 
 });
-
-const getCount = createSelector<State, State, number>(
-  state => state,
-  state => state.count
-);
-
-const add100 = new IncrementBy(100);
-
-const add100times = n => interval(200).pipe(
-  map(() => add100),
+ 
+const add1 = new Increment();
+ 
+const add1times = n => interval(200).pipe(
+  map(() => add1),
   take(n)
 );
-
+ 
 //dispaching an observable action
-actionQ.next(add100times(10));
-
-state$.pipe(select(getCount)).subscribe(console.log);
+actionQ.next(add1times(10));
+ 
+state$.subscribe(console.log);
 ```
 
 ## Changelog

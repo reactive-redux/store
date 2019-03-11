@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 
-export enum FlattenOps {
+export enum FlattenOperators {
   switchMap = 'switchMap',
   mergeMap = 'mergeMap',
   concatMap = 'concatMap',
@@ -9,15 +9,15 @@ export enum FlattenOps {
 
 export interface StoreConfig<State, ActionsUnion> {
   actionMap$?: Observable<ActionMap<State>>;
-  actions$?: Observable<AsyncType<ActionsUnion>>;
+  actions$?: Observable<ActionsUnion>;
   initialState$?: Observable<State>;
   transducers$?: Observable<TransducerMap<State>>;
-  destroy$?: Observable<boolean>;
+  destroy$?: Observable<any>;
 }
 
 export interface StoreOptions {
-  actionFop?: FlattenOps;
-  stateFop?: FlattenOps;
+  actionFop?: FlattenOperators;
+  stateFop?: FlattenOperators;
 }
 
 export type AsyncType<T> = T | Promise<T> | Observable<T>;

@@ -1,16 +1,23 @@
-import { ReducerFn, IAction, TransducerFn } from "./interfaces";
+import { ReducerFn, IAction, TransducerFn } from './interfaces';
 
 /**
- * 
+ *
  * @param mapFn - a function to map a state with
  * @returns {TransducerFn} TransducerFn<State>
+ *
+ * PS - previous state
+ * NS - next state
  */
-export const mapS = <State>(mapFn: (state: State) => State) => (
+export const mapPS = <State>(mapFn: (state: State) => State) => (
+  reducer: ReducerFn<State>
+) => (state: State, action: IAction) => reducer(mapFn(state), action);
+
+export const mapNS = <State>(mapFn: (state: State) => State) => (
   reducer: ReducerFn<State>
 ) => (state: State, action: IAction) => mapFn(reducer(state, action));
 
 /**
- * 
+ *
  * @param mapFn - a function to map an action with
  * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
  */
@@ -19,18 +26,28 @@ export const mapA = <State, A extends IAction>(mapFn: (action: A) => A) => (
 ) => (state: State, action: A) => reducer(state, mapFn(action));
 
 /**
- * 
+ *
  * @param filterFn - a function to filter a state with
  * @returns {TransducerFn} TransducerFn<State>
+ *
+ * PS - previous state
+ * NS - next state
  */
-export const filterS = <State>(filterFn: (state: State) => boolean) => (
+export const filterPS = <State>(filterFn: (state: State) => boolean) => (
   reducer: ReducerFn<State>
 ) => (state: State, action: IAction) => {
   return filterFn(state) ? reducer(state, action) : state;
 };
 
+export const filterNS = <State>(filterFn: (state: State) => boolean) => (
+  reducer: ReducerFn<State>
+) => (state: State, action: IAction) => {
+  const nextState = reducer(state, action);
+  return filterFn(nextState) ? nextState : state;
+};
+
 /**
- * 
+ *
  * @param filterFn - a function to filter an action with
  * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
  */
@@ -41,18 +58,27 @@ export const filterA = <State, A extends IAction>(
 };
 
 /**
- * 
+ *
  * @param reduceFn - a function to reduce the state and action together
  * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
+ *
+ * PS - previous state
+ * NS - next state
  */
-export const reduceS = <State, A extends IAction>(
+export const reducePS = <State, A extends IAction>(
   reducerFn: (state: State, action: A) => State
 ) => (reducer: ReducerFn<State>) => (state: State, action: A) => {
   return reducer(reducerFn(state, action), action);
 };
 
+export const reduceNS = <State, A extends IAction>(
+  reducerFn: (state: State, action: A) => State
+) => (reducer: ReducerFn<State>) => (state: State, action: A) => {
+  return reducerFn(reducer(state, action), action);
+};
+
 /**
- * 
+ *
  * @param reduceFn - a function to reduce the state and action together
  * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
  */

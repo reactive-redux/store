@@ -2,7 +2,7 @@ import { Observable, of, EMPTY, NEVER } from 'rxjs';
 import {
   ActionMap,
   AsyncType,
-  FlattenOps,
+  FlattenOperators,
   StoreConfig,
   StoreOptions,
   TransducerMap
@@ -10,7 +10,7 @@ import {
 import { catchErr } from './utils';
 import { switchMap, mergeMap, concatMap, exhaustMap } from 'rxjs/operators';
 
-const FlattenOperators: { [key in FlattenOps]: any } = {
+const fop: { [key in FlattenOperators]: any } = {
   switchMap,
   mergeMap,
   concatMap,
@@ -41,10 +41,10 @@ export function getDefaults<State, ActionsUnion>(
     (config && config.destroy$ && config.destroy$.pipe(catchErr)) || NEVER;
 
   const actionFop =
-    FlattenOperators[(options && options.actionFop) || FlattenOps.concatMap];
+    fop[(options && options.actionFop) || FlattenOperators.concatMap];
 
   const stateFop =
-    FlattenOperators[(options && options.stateFop) || FlattenOps.switchMap];
+    fop[(options && options.stateFop) || FlattenOperators.switchMap];
 
   return {
     actionMap$,
