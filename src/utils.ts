@@ -1,6 +1,6 @@
 import { pipe, from, of, isObservable, Observable } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
-import { IAction, AsyncType, ActionMap } from './interfaces';
+import { map, catchError, mergeMap } from 'rxjs/operators';
+import { AsyncType, ActionMap } from './interfaces';
 
 export const isObject = (value: any) => value !== null && typeof value === 'object';
 
@@ -25,4 +25,10 @@ export const mapToObservable = <T>() =>
       if (value instanceof Promise) return from(value);
       return of(value);
     })
+  );
+
+export const flattenAsyncType = <T>(state: T | AsyncType<T>) =>
+  of(state).pipe(
+    mapToObservable(),
+    mergeMap(v => v)
   );

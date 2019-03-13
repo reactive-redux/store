@@ -27,7 +27,7 @@ export interface IAction {
   payload?: unknown;
 }
 
-export type ReducerFn<State> = (state: State, action: any) => State;
+export type ReducerFn<State> = (state: State, action: any) => State | AsyncType<State>;
 
 export type ActionMap<State> = {
   [key: string]: ReducerFn<State>;

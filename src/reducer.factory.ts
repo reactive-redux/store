@@ -8,12 +8,12 @@ export function reducerFactory<State, ActionsUnion extends Action>(
 ) {
   const transducers = Object.keys(transducerMap).map(key => transducerMap[key]);
   const hasT = transducers.length > 0;
-  const map = { ...actionMap };
+  const _actionMap = { ...actionMap };
 
   return function reducer(state: State, action: ActionsUnion) {
-    if (!isValidAction(action, map)) return state;
+    if (!isValidAction(action, _actionMap)) return state;
 
-    const actionReducer = map[action.type];
+    const actionReducer = _actionMap[action.type];
 
     return hasT
       ? _pipe(transducers)(actionReducer)(state, action)
