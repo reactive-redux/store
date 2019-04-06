@@ -6,7 +6,12 @@ export default {
   output: [
     {
       file: pkg.main,
-      format: 'cjs'
+      name: '@reactive-redux/store',
+      format: 'umd'
+    },
+    {
+      file: `${pkg.main}.es.js`,
+      format: 'es'
     }
   ],
   plugins: [

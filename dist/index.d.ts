@@ -1,5 +1,6 @@
-export { AsyncType, FlattenOperators } from './interfaces';
+export { AsyncType, FlattenOperator, Scheduler } from './interfaces';
 export { createSelector, select } from './selectors';
 export { Store, createStore } from './store';
-export { Action, ofType } from './action';
 export * from './transducers';
+export { mapToObservable, ofType, catchErr } from './utils';
+export { Action } from './action';

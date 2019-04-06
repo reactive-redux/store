@@ -1,23 +1,7 @@
-import { Observable, combineLatest } from 'rxjs';
-import {
-  scan,
-  startWith,
-  shareReplay,
-  takeUntil,
-  switchMap,
-  map,
-  filter,
-  mergeMap,
-  delay
-} from 'rxjs/operators';
+import { Observable, combineLatest, of, Subject } from 'rxjs';
+import { startWith, shareReplay, takeUntil, switchMap, map } from 'rxjs/operators';
 import { reducerFactory } from './reducer.factory';
-import { StoreConfig, StoreOptions, ReducerFn, IAction, FlattenOperators } from './interfaces';
-import {
-  mapToObservable,
-  flattenObservable,
-  isObject,
-  flattenAsyncType
-} from './utils';
+import { StoreConfig, StoreOptions, IAction, Scheduler, FlattenOperator } from './interfaces';
 import { getDefaults } from './defaults';
 
 /**
@@ -28,10 +12,11 @@ import { getDefaults } from './defaults';
  * @type State - application state interface
  * @type ActionsUnion - type union of all the actions
  */
-export class Store<State, ActionsUnion = any> {
+export class Store<State, ActionsUnion extends IAction = any> {
   public state$: Observable<State>;
 
   /**
+   * Default configuration
    *
    * @param {Object} config
    *  {
@@ -46,6 +31,8 @@ export class Store<State, ActionsUnion = any> {
    *  {
    *     actionFop: FlattenOps.concatMap, //(actions are executed in order of propagation)
    *     stateFop: FlattenOps.switchMap //(will update to the latest received state, without waiting for previous async operations to finish)
+   *     scheduler: Scheduler.queue,
+   *     windowTime: undefined
    *  }
    */
   constructor(
@@ -54,147 +41,33 @@ export class Store<State, ActionsUnion = any> {
   ) {
     const {
       actionMap$,
-      actions$,
-      destroy$,
-      initialState$,
       transducers$,
-      actionFop,
-      stateFop
+      actionFactory$,
+      initialState$,
+      flattenState$,
+      destroy$,
+      shareReplayConfig
     } = getDefaults<State, ActionsUnion>(this.config, this.options);
 
     this.state$ = combineLatest(actionMap$, transducers$, initialState$).pipe(
-      map(([map, transducers, state]) =>
-        scan(reducerFactory(map, transducers), state)
-      ),
-      switchMap(scanReducer =>
-        actions$.pipe(
-          filter(isObject),
-          mapToObservable(),
-          actionFop(flattenObservable),
-          scanReducer,
-          mapToObservable()
-        )
-      ),
+      map(reducerFactory),
+      switchMap(actionFactory$),
       startWith(initialState$),
-      stateFop(flattenObservable),
+      flattenState$(),
       takeUntil<State>(destroy$),
-      shareReplay(1)
+      shareReplay(shareReplayConfig)
     );
 
     this.state$.subscribe();
   }
 }
 
-export function createStore<State, ActionsUnion = any>(
-  config?: StoreConfig<State, ActionsUnion>,
-  opts?: StoreOptions
+export function createStore<State, ActionsUnion extends IAction>(
+  config: StoreConfig<State, ActionsUnion> = {},
+  opts: StoreOptions = {}
 ) {
   return new Store<State, ActionsUnion>(config, opts);
 }
 
-import { Subject, of, interval, range } from 'rxjs';
-import { tap, take } from 'rxjs/operators';
-import { Action } from './action';
-import { AsyncType } from './interfaces';
-import { select } from './selectors';
-
-interface State {
-  count: number;
-}
-
-// class Increment extends Action {
-//   constructor(public payload: number) {
-//     super();
-//   }
-// }
-
-// class Decrement extends Action {
-//   constructor(public payload: number) {
-//     super();
-//   }
-// }
-
-interface Increment extends IAction {
-  payload: number;
-}
-
-interface Decrement extends IAction {
-  payload: number;
-}
-
-type ActionsUnion = Increment | Decrement;
-
-const actionQ = new Subject<AsyncType<ActionsUnion>>();
-
-const initialState = {
-  count: 0
-};
-
-const initialState$ = of(initialState);
-const actions$ = actionQ.asObservable();
-
-const inc = (state: State, action: Increment) =>
-  flattenAsyncType(state).pipe(
-    map(state => ({ count: state.count + action.payload })),
-    delay(200)
-  );
-
-const decr = (state: State, action: Decrement) =>
-  flattenAsyncType(state).pipe(
-    map(state => ({ count: state.count - action.payload }))
-  );
-
-type ActionCreator = <T, A extends Action>(a: ReducerFn<T>[]) => { actions: { [key: string]: (payload: any) => A }, actionMap: { [key: string]: ReducerFn<T> } };
-const capitalize = (str: string) =>  str.replace(/^\w/, c => c.toUpperCase());
-const createActions: ActionCreator = (a) => a.reduce((acc, curr) => {
-  return {
-    actions: { 
-      ...acc.actions,
-      [capitalize(curr.name)]: (payload: any) => ({ type: curr.name, payload })
-    },
-    actionMap: { ...acc.actionMap, [curr.name]: curr }
-  };
-}, { actionMap: {}, actions: {} });
-
-const { actionMap, actions } = createActions<State, ActionsUnion>([inc, decr]);
-const { Inc, Decr } = actions;
-
-// export const logger = reducer => (state, action) => {
-//   const t1 = performance.now();
-//   const newState = reducer(state, action);
-//   const t2 = performance.now();
-//   console.log(`${action.type} changed state to:`, newState, `in ${(t2 -t1).toFixed(2)}ms.`);
-//   return newState;
-// }
-
-const actionMap$ = of(actionMap);
-const transducers$ = of({
-  // ['logger']: logger
-});
-
-const { state$ } = createStore<State, AsyncType<ActionsUnion>>({
-  initialState$,
-  actions$,
-  actionMap$,
-  transducers$
-});
-
-state$
-  .pipe(
-    select(state => state),
-    tap(console.log)
-  )
-  .subscribe();
-
-const add100times = ({ withInterval, times }: any) =>
-  (withInterval ? interval(200) : range(0, Infinity)).pipe(
-    map(i => Inc(i)),
-    take(times)
-  );
-
-const finalAction: any = add100times({
-  withInterval: true,
-  times: 10
-});
-
-actionQ.next(finalAction);
+const { state$ } = createStore();
+state$.subscribe(console.log)

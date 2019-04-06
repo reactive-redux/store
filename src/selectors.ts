@@ -18,8 +18,7 @@ export type MemoizeFn = (t: AnyFn) => MemoizedProjection;
 
 export type ComparatorFn = (a: any, b: any) => boolean;
 
-export interface MemoizedSelector<State, Result>
-  extends Selector<State, Result> {
+export interface MemoizedSelector<State, Result> extends Selector<State, Result> {
   release(): void;
   projector: AnyFn;
 }
@@ -47,10 +46,7 @@ function isArgumentsChanged(
   return false;
 }
 
-export function resultMemoize(
-  projectionFn: AnyFn,
-  isResultEqual: ComparatorFn
-) {
+export function resultMemoize(projectionFn: AnyFn, isResultEqual: ComparatorFn) {
   return defaultMemoize(projectionFn, isEqualCheck, isResultEqual);
 }
 
@@ -147,11 +143,7 @@ export function createSelector<State, Props, S1, S2, S3, Result>(
   projector: (s1: S1, s2: S2, s3: S3, props: Props) => Result
 ): MemoizedSelectorWithProps<State, Props, Result>;
 export function createSelector<State, S1, S2, S3, Result>(
-  selectors: [
-    Selector<State, S1>,
-    Selector<State, S2>,
-    Selector<State, S3>
-  ],
+  selectors: [Selector<State, S1>, Selector<State, S2>, Selector<State, S3>],
   projector: (s1: S1, s2: S2, s3: S3) => Result
 ): MemoizedSelector<State, Result>;
 export function createSelector<State, Props, S1, S2, S3, Result>(
@@ -210,14 +202,7 @@ export function createSelector<State, Props, S1, S2, S3, S4, S5, Result>(
   s3: SelectorWithProps<State, Props, S3>,
   s4: SelectorWithProps<State, Props, S4>,
   s5: SelectorWithProps<State, Props, S5>,
-  projector: (
-    s1: S1,
-    s2: S2,
-    s3: S3,
-    s4: S4,
-    s5: S5,
-    props: Props
-  ) => Result
+  projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, props: Props) => Result
 ): MemoizedSelectorWithProps<State, Props, Result>;
 export function createSelector<State, S1, S2, S3, S4, S5, Result>(
   selectors: [
@@ -237,14 +222,7 @@ export function createSelector<State, Props, S1, S2, S3, S4, S5, Result>(
     SelectorWithProps<State, Props, S4>,
     SelectorWithProps<State, Props, S5>
   ],
-  projector: (
-    s1: S1,
-    s2: S2,
-    s3: S3,
-    s4: S4,
-    s5: S5,
-    props: Props
-  ) => Result
+  projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, props: Props) => Result
 ): MemoizedSelectorWithProps<State, Props, Result>;
 
 export function createSelector<State, S1, S2, S3, S4, S5, S6, Result>(
@@ -256,32 +234,14 @@ export function createSelector<State, S1, S2, S3, S4, S5, S6, Result>(
   s6: Selector<State, S6>,
   projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, s6: S6) => Result
 ): MemoizedSelector<State, Result>;
-export function createSelector<
-  State,
-  Props,
-  S1,
-  S2,
-  S3,
-  S4,
-  S5,
-  S6,
-  Result
->(
+export function createSelector<State, Props, S1, S2, S3, S4, S5, S6, Result>(
   s1: SelectorWithProps<State, Props, S1>,
   s2: SelectorWithProps<State, Props, S2>,
   s3: SelectorWithProps<State, Props, S3>,
   s4: SelectorWithProps<State, Props, S4>,
   s5: SelectorWithProps<State, Props, S5>,
   s6: SelectorWithProps<State, Props, S6>,
-  projector: (
-    s1: S1,
-    s2: S2,
-    s3: S3,
-    s4: S4,
-    s5: S5,
-    s6: S6,
-    props: Props
-  ) => Result
+  projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, s6: S6, props: Props) => Result
 ): MemoizedSelectorWithProps<State, Props, Result>;
 export function createSelector<State, S1, S2, S3, S4, S5, S6, Result>(
   selectors: [
@@ -294,17 +254,7 @@ export function createSelector<State, S1, S2, S3, S4, S5, S6, Result>(
   ],
   projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, s6: S6) => Result
 ): MemoizedSelector<State, Result>;
-export function createSelector<
-  State,
-  Props,
-  S1,
-  S2,
-  S3,
-  S4,
-  S5,
-  S6,
-  Result
->(
+export function createSelector<State, Props, S1, S2, S3, S4, S5, S6, Result>(
   selectors: [
     SelectorWithProps<State, Props, S1>,
     SelectorWithProps<State, Props, S2>,
@@ -313,15 +263,7 @@ export function createSelector<
     SelectorWithProps<State, Props, S5>,
     SelectorWithProps<State, Props, S6>
   ],
-  projector: (
-    s1: S1,
-    s2: S2,
-    s3: S3,
-    s4: S4,
-    s5: S5,
-    s6: S6,
-    props: Props
-  ) => Result
+  projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, s6: S6, props: Props) => Result
 ): MemoizedSelectorWithProps<State, Props, Result>;
 
 export function createSelector<State, S1, S2, S3, S4, S5, S6, S7, Result>(
@@ -332,28 +274,9 @@ export function createSelector<State, S1, S2, S3, S4, S5, S6, S7, Result>(
   s5: Selector<State, S5>,
   s6: Selector<State, S6>,
   s7: Selector<State, S7>,
-  projector: (
-    s1: S1,
-    s2: S2,
-    s3: S3,
-    s4: S4,
-    s5: S5,
-    s6: S6,
-    s7: S7
-  ) => Result
+  projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, s6: S6, s7: S7) => Result
 ): MemoizedSelector<State, Result>;
-export function createSelector<
-  State,
-  Props,
-  S1,
-  S2,
-  S3,
-  S4,
-  S5,
-  S6,
-  S7,
-  Result
->(
+export function createSelector<State, Props, S1, S2, S3, S4, S5, S6, S7, Result>(
   s1: SelectorWithProps<State, Props, S1>,
   s2: SelectorWithProps<State, Props, S2>,
   s3: SelectorWithProps<State, Props, S3>,
@@ -382,28 +305,9 @@ export function createSelector<State, S1, S2, S3, S4, S5, S6, S7, Result>(
     Selector<State, S6>,
     Selector<State, S7>
   ],
-  projector: (
-    s1: S1,
-    s2: S2,
-    s3: S3,
-    s4: S4,
-    s5: S5,
-    s6: S6,
-    s7: S7
-  ) => Result
+  projector: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, s6: S6, s7: S7) => Result
 ): MemoizedSelector<State, Result>;
-export function createSelector<
-  State,
-  Props,
-  S1,
-  S2,
-  S3,
-  S4,
-  S5,
-  S6,
-  S7,
-  Result
->(
+export function createSelector<State, Props, S1, S2, S3, S4, S5, S6, S7, Result>(
   selectors: [
     SelectorWithProps<State, Props, S1>,
     SelectorWithProps<State, Props, S2>,
@@ -425,18 +329,7 @@ export function createSelector<
   ) => Result
 ): MemoizedSelectorWithProps<State, Props, Result>;
 
-export function createSelector<
-  State,
-  S1,
-  S2,
-  S3,
-  S4,
-  S5,
-  S6,
-  S7,
-  S8,
-  Result
->(
+export function createSelector<State, S1, S2, S3, S4, S5, S6, S7, S8, Result>(
   s1: Selector<State, S1>,
   s2: Selector<State, S2>,
   s3: Selector<State, S3>,
@@ -456,19 +349,7 @@ export function createSelector<
     s8: S8
   ) => Result
 ): MemoizedSelector<State, Result>;
-export function createSelector<
-  State,
-  Props,
-  S1,
-  S2,
-  S3,
-  S4,
-  S5,
-  S6,
-  S7,
-  S8,
-  Result
->(
+export function createSelector<State, Props, S1, S2, S3, S4, S5, S6, S7, S8, Result>(
   s1: SelectorWithProps<State, Props, S1>,
   s2: SelectorWithProps<State, Props, S2>,
   s3: SelectorWithProps<State, Props, S3>,
@@ -489,18 +370,7 @@ export function createSelector<
     props: Props
   ) => Result
 ): MemoizedSelectorWithProps<State, Props, Result>;
-export function createSelector<
-  State,
-  S1,
-  S2,
-  S3,
-  S4,
-  S5,
-  S6,
-  S7,
-  S8,
-  Result
->(
+export function createSelector<State, S1, S2, S3, S4, S5, S6, S7, S8, Result>(
   selectors: [
     Selector<State, S1>,
     Selector<State, S2>,
@@ -522,19 +392,7 @@ export function createSelector<
     s8: S8
   ) => Result
 ): MemoizedSelector<State, Result>;
-export function createSelector<
-  State,
-  Props,
-  S1,
-  S2,
-  S3,
-  S4,
-  S5,
-  S6,
-  S7,
-  S8,
-  Result
->(
+export function createSelector<State, Props, S1, S2, S3, S4, S5, S6, S7, S8, Result>(
   selectors: [
     SelectorWithProps<State, Props, S1>,
     SelectorWithProps<State, Props, S2>,
@@ -626,8 +484,7 @@ export function createSelectorFactory(
     const selectors = args.slice(0, args.length - 1);
     const projector = args[args.length - 1];
     const memoizedSelectors = selectors.filter(
-      (selector: any) =>
-        selector.release && typeof selector.release === 'function'
+      (selector: any) => selector.release && typeof selector.release === 'function'
     );
 
     const memoizedProjector = memoize(function(...selectors: any[]) {
@@ -680,11 +537,7 @@ export function select<
   a extends keyof T,
   b extends keyof T[a],
   c extends keyof T[a][b]
->(
-  key1: a,
-  key2: b,
-  key3: c
-): (source$: Observable<T>) => Observable<T[a][b][c]>;
+>(key1: a, key2: b, key3: c): (source$: Observable<T>) => Observable<T[a][b][c]>;
 export function select<
   T,
   a extends keyof T,
@@ -744,9 +597,7 @@ export function select<T, Props, K>(
       const pathSlices = [<string>propsOrPath, ...paths].filter(Boolean);
       mapped$ = source$.pipe(pluck(pathOrMapFn, ...pathSlices));
     } else if (typeof pathOrMapFn === 'function') {
-      mapped$ = source$.pipe(
-        map(source => pathOrMapFn(source, <Props>propsOrPath))
-      );
+      mapped$ = source$.pipe(map(source => pathOrMapFn(source, <Props>propsOrPath)));
     } else {
       throw new TypeError(
         `Unexpected type '${typeof pathOrMapFn}' in select operator,` +

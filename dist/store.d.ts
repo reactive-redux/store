@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { StoreConfig, StoreOptions } from './interfaces';
+import { StoreConfig, StoreOptions, IAction } from './interfaces';
 /**
  * Reactive state container based on RxJS (https://rxjs.dev/)
  *
@@ -8,11 +8,12 @@ import { StoreConfig, StoreOptions } from './interfaces';
  * @type State - application state interface
  * @type ActionsUnion - type union of all the actions
  */
-export declare class Store<State, ActionsUnion = any> {
+export declare class Store<State, ActionsUnion extends IAction = any> {
     private config?;
     private options?;
     state$: Observable<State>;
     /**
+     * Default configuration
      *
      * @param {Object} config
      *  {
@@ -27,8 +28,10 @@ export declare class Store<State, ActionsUnion = any> {
      *  {
      *     actionFop: FlattenOps.concatMap, //(actions are executed in order of propagation)
      *     stateFop: FlattenOps.switchMap //(will update to the latest received state, without waiting for previous async operations to finish)
+     *     scheduler: Scheduler.queue,
+     *     windowTime: undefined
      *  }
      */
     constructor(config?: StoreConfig<State, ActionsUnion> | undefined, options?: StoreOptions | undefined);
 }
-export declare function createStore<State, ActionsUnion = any>(config?: StoreConfig<State, ActionsUnion>, opts?: StoreOptions): Store<State, ActionsUnion>;
+export declare function createStore<State, ActionsUnion extends IAction>(config?: StoreConfig<State, ActionsUnion>, opts?: StoreOptions): Store<State, ActionsUnion>;

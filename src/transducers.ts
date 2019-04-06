@@ -8,13 +8,13 @@ import { ReducerFn, IAction, TransducerFn } from './interfaces';
  * PS - previous state
  * NS - next state
  */
-export const mapPS = <State>(mapFn: (state: State) => State) => (
-  reducer: ReducerFn<State>
-) => (state: State, action: IAction) => reducer(mapFn(state), action);
+export const mapPS = <State, A extends IAction>(mapFn: (state: State) => State) => (
+  reducer: ReducerFn<State, A>
+) => (state: State, action: A) => reducer(mapFn(state), action);
 
-export const mapNS = <State>(mapFn: (state: State) => State) => (
-  reducer: ReducerFn<State>
-) => (state: State, action: IAction) => mapFn(reducer(state, action));
+export const mapNS = <State, A extends IAction>(mapFn: (state: State) => State) => (
+  reducer: ReducerFn<State, A>
+) => (state: State, action: A) => mapFn(reducer(state, action));
 
 /**
  *
@@ -22,7 +22,7 @@ export const mapNS = <State>(mapFn: (state: State) => State) => (
  * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
  */
 export const mapA = <State, A extends IAction>(mapFn: (action: A) => A) => (
-  reducer: ReducerFn<State>
+  reducer: ReducerFn<State, A>
 ) => (state: State, action: A) => reducer(state, mapFn(action));
 
 /**
@@ -33,15 +33,15 @@ export const mapA = <State, A extends IAction>(mapFn: (action: A) => A) => (
  * PS - previous state
  * NS - next state
  */
-export const filterPS = <State>(filterFn: (state: State) => boolean) => (
-  reducer: ReducerFn<State>
-) => (state: State, action: IAction) => {
+export const filterPS = <State, A extends IAction>(filterFn: (state: State) => boolean) => (
+  reducer: ReducerFn<State, A>
+) => (state: State, action: A) => {
   return filterFn(state) ? reducer(state, action) : state;
 };
 
-export const filterNS = <State>(filterFn: (state: State) => boolean) => (
-  reducer: ReducerFn<State>
-) => (state: State, action: IAction) => {
+export const filterNS = <State, A extends IAction>(filterFn: (state: State) => boolean) => (
+  reducer: ReducerFn<State, A>
+) => (state: State, action: A) => {
   const nextState = reducer(state, action);
   return filterFn(nextState) ? nextState : state;
 };
@@ -53,7 +53,7 @@ export const filterNS = <State>(filterFn: (state: State) => boolean) => (
  */
 export const filterA = <State, A extends IAction>(
   filterFn: (action: A) => boolean
-) => (reducer: ReducerFn<State>) => (state: State, action: A) => {
+) => (reducer: ReducerFn<State, A>) => (state: State, action: A) => {
   return filterFn(action) ? reducer(state, action) : state;
 };
 
@@ -67,13 +67,13 @@ export const filterA = <State, A extends IAction>(
  */
 export const reducePS = <State, A extends IAction>(
   reducerFn: (state: State, action: A) => State
-) => (reducer: ReducerFn<State>) => (state: State, action: A) => {
+) => (reducer: ReducerFn<State, A>) => (state: State, action: A) => {
   return reducer(reducerFn(state, action), action);
 };
 
 export const reduceNS = <State, A extends IAction>(
   reducerFn: (state: State, action: A) => State
-) => (reducer: ReducerFn<State>) => (state: State, action: A) => {
+) => (reducer: ReducerFn<State, A>) => (state: State, action: A) => {
   return reducerFn(reducer(state, action), action);
 };
 
@@ -84,6 +84,6 @@ export const reduceNS = <State, A extends IAction>(
  */
 export const reduceA = <State, A extends IAction>(
   reducerFn: (state: State, action: A) => A
-) => (reducer: ReducerFn<State>) => (state: State, action: A) => {
+) => (reducer: ReducerFn<State, A>) => (state: State, action: A) => {
   return reducer(state, reducerFn(state, action));
 };

@@ -1,12 +1,12 @@
-import { pipe, from, of, isObservable, Observable } from 'rxjs';
-import { map, catchError, mergeMap } from 'rxjs/operators';
-import { AsyncType, ActionMap } from './interfaces';
+import { pipe, from, of, isObservable, Observable, OperatorFunction } from 'rxjs';
+import { map, catchError, filter } from 'rxjs/operators';
+import { AsyncType, ActionMap, IAction } from './interfaces';
 
 export const isObject = (value: any) => value !== null && typeof value === 'object';
 
 export const hasType = (action: any) => typeof action.type === 'string';
 
-export const isValidAction = (action: any, map: ActionMap<any>) =>
+export const isValidAction = <State, ActionsUnion extends IAction>(action: ActionsUnion, map: ActionMap<State, ActionsUnion>) =>
   hasType(action) &&
   map.hasOwnProperty(action.type) &&
   typeof map[action.type] === 'function';
@@ -27,8 +27,12 @@ export const mapToObservable = <T>() =>
     })
   );
 
-export const flattenAsyncType = <T>(state: T | AsyncType<T>) =>
-  of(state).pipe(
-    mapToObservable(),
-    mergeMap(v => v)
+
+export function ofType<T extends IAction>(
+  ...allowedTypes: string[]
+): OperatorFunction<IAction, T> {
+  return filter(
+    (action: IAction): action is T =>
+      allowedTypes.some(type => type === action.type)
   );
+}

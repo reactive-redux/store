@@ -5,6 +5,7 @@
   "author": "Zdravko Tatarski",
   "license": "MIT",
   "main": "./dist/index.js",
+  "module": "./dist/index.es.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
@@ -12,9 +13,10 @@
   "homepage": "https://github.com/reactive-redux/store",
   "scripts": {
     "start": "nodemon",
-    "build": "./node_modules/.bin/rollup -c",
-    "npm-publish": "npm run build && npm publish",
-    "test": "./node_modules/.bin/jest"
+    "build": "npm run clean:dist && ./node_modules/.bin/rollup -c",
+    "npm:publish": "npm run build && npm publish",
+    "test": "./node_modules/.bin/jest",
+    "clean:dist": "rm -rf ./dist"
   },
   "devDependencies": {
     "@types/jasmine": "2.8.12",
