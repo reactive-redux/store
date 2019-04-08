@@ -9,15 +9,16 @@ export declare enum FlattenOperator {
     concatMap = "concatMap",
     exhaustMap = "exhaustMap"
 }
-export declare enum Scheduler {
+export declare enum Schedulers {
     queue = "queueScheduler",
     asap = "asapScheduler",
     animationFrame = "animationFrameScheduler",
     async = "asyncScheduler"
 }
+export declare type ConfigActionMap<State, ActionsUnion extends IAction> = Observable<ReducerFn<State, ActionsUnion>[]>;
 export interface StoreConfig<State, ActionsUnion extends IAction> {
-    actionMap$?: Observable<ActionMap<State, ActionsUnion>>;
-    actions$?: Observable<ActionsUnion | AsyncType<ActionsUnion>>;
+    reducers$?: ConfigActionMap<State, ActionsUnion>;
+    actionStream$?: Observable<ActionsUnion | AsyncType<ActionsUnion>>;
     initialState$?: Observable<State>;
     transducers$?: Observable<TransducerMap<State, ActionsUnion>>;
     destroy$?: Observable<any>;
@@ -25,7 +26,7 @@ export interface StoreConfig<State, ActionsUnion extends IAction> {
 export interface StoreOptions {
     actionFop?: FlattenOperator;
     stateFop?: FlattenOperator;
-    scheduler?: Scheduler;
+    scheduler?: Schedulers;
     bufferSize?: number;
     windowTime?: number;
 }
@@ -37,4 +38,12 @@ export declare type ActionMap<State, A extends IAction> = {
 export declare type TransducerFn<State, A extends IAction> = (reducer: ReducerFn<State, A>) => ReducerFn<State, A>;
 export declare type TransducerMap<T, A extends IAction> = {
     [key: string]: TransducerFn<T, A>;
+};
+export declare type ActionCreator = <T, A extends IAction>(a: any[]) => {
+    actions: {
+        [key: string]: (payload?: unknown) => any;
+    };
+    actionMap$: {
+        [key: string]: ReducerFn<T, A>;
+    };
 };

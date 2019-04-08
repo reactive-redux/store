@@ -6,13 +6,15 @@ import { Observable, OperatorFunction } from 'rxjs';
 // flatten: FlattenOperator from ./interfaces
 export function actionFactory<State, ActionsUnion extends IAction>(
   actions$: Observable<AsyncType<ActionsUnion>>,
-  flatten: any
+  flatten: (
+    a: Observable<ActionsUnion>
+  ) => OperatorFunction<Observable<ActionsUnion>, ActionsUnion>
 ) {
   return (reducer: OperatorFunction<ActionsUnion, State>) =>
     actions$.pipe(
       filter(isObject),
       mapToObservable(),
-      flatten(flattenObservable),
+      flatten(<any>flattenObservable),
       reducer,
       mapToObservable()
     );

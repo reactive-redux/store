@@ -12,23 +12,26 @@ export declare class Store<State, ActionsUnion extends IAction = any> {
     private config?;
     private options?;
     state$: Observable<State>;
+    actions$: Observable<{
+        [key: string]: (payload?: unknown) => ActionsUnion;
+    }>;
     /**
      * Default configuration
      *
      * @param {Object} config
      *  {
      *     actionMap$: of({}),
-     *     actions$: EMPTY, //(if not defined, no actions will be dispatched in the store)
+     *     actions$: EMPTY, // if not defined, no actions will be dispatched in the store
      *     initialState$: of({}),
      *     metaReducers$: of({}),
-     *     destroy$: NEVER //(if not defined, the state subscription will live forever)
+     *     destroy$: NEVER // if not defined, the state subscription will live forever
      *  }
      *
      * @param {Object} options
      *  {
-     *     actionFop: FlattenOps.concatMap, //(actions are executed in order of propagation)
-     *     stateFop: FlattenOps.switchMap //(will update to the latest received state, without waiting for previous async operations to finish)
-     *     scheduler: Scheduler.queue,
+     *     actionFop: FlattenOps.concatMap, // actions are executed in order of propagation
+     *     stateFop: FlattenOps.switchMap // will update to the latest received state, without waiting for previous async operations to finish
+     *     scheduler: undefined,
      *     windowTime: undefined
      *  }
      */

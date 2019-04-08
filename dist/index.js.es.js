@@ -1,4 +1,4 @@
-import { pluck, map, distinctUntilChanged, catchError, filter, scan, switchMap, mergeMap, concatMap, exhaustMap, startWith, takeUntil, shareReplay } from 'rxjs/operators';
+import { pluck, map, distinctUntilChanged, catchError, filter, scan, share, switchMap, mergeMap, concatMap, exhaustMap, startWith, takeUntil, shareReplay } from 'rxjs/operators';
 import { pipe, of, isObservable, from, EMPTY, NEVER, queueScheduler, asapScheduler, animationFrameScheduler, asyncScheduler, combineLatest } from 'rxjs';
 import { AnimationFrameScheduler } from 'rxjs/internal/scheduler/AnimationFrameScheduler';
 
@@ -9,13 +9,13 @@ var FlattenOperator;
     FlattenOperator["concatMap"] = "concatMap";
     FlattenOperator["exhaustMap"] = "exhaustMap";
 })(FlattenOperator || (FlattenOperator = {}));
-var Scheduler;
-(function (Scheduler) {
-    Scheduler["queue"] = "queueScheduler";
-    Scheduler["asap"] = "asapScheduler";
-    Scheduler["animationFrame"] = "animationFrameScheduler";
-    Scheduler["async"] = "asyncScheduler";
-})(Scheduler || (Scheduler = {}));
+var Schedulers;
+(function (Schedulers) {
+    Schedulers["queue"] = "queueScheduler";
+    Schedulers["asap"] = "asapScheduler";
+    Schedulers["animationFrame"] = "animationFrameScheduler";
+    Schedulers["async"] = "asyncScheduler";
+})(Schedulers || (Schedulers = {}));
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -226,12 +226,22 @@ function ofType() {
     for (var _i = 0; _i < arguments.length; _i++) {
         allowedTypes[_i] = arguments[_i];
     }
-    return filter(function (action) {
-        return allowedTypes.some(function (type) { return type === action.type; });
-    });
+    return filter(function (action) { return allowedTypes.some(function (type) { return type === action.type; }); });
 }
+var capitalize = function (str) { return str.replace(/^\w/, function (c) { return c.toUpperCase(); }); };
+var createActions = function (actions) {
+    return actions.reduce(function (acc, curr) {
+        var _a, _b;
+        if (typeof curr !== 'function')
+            return acc;
+        return {
+            actions: __assign({}, acc.actions, (_a = {}, _a[capitalize(curr.name)] = function (payload) { return ({ type: curr.name, payload: payload }); }, _a)),
+            actionMap$: __assign({}, acc.actionMap$, (_b = {}, _b[curr.name] = curr, _b))
+        };
+    }, { actionMap$: {}, actions: {} });
+};
 
-function reducerFactory(_a) {
+function reducerFactory$(_a) {
     var _b = __read(_a, 3), actionMap = _b[0], transducerMap = _b[1], initialState = _b[2];
     var transducers = Object.keys(transducerMap).map(function (key) { return transducerMap[key]; });
     var hasT = transducers.length > 0;
@@ -267,11 +277,23 @@ var sched = {
     asyncScheduler: asyncScheduler
 };
 var isWindow = typeof window !== 'undefined' && !!window;
+var isAnimationScheduler = function (scheduler) {
+    return scheduler instanceof AnimationFrameScheduler;
+};
+var returnDefault = function () {
+    console.warn("AnimationFrameScheduler can be used only in the browser.");
+    return undefined;
+};
 function getDefaults(config, options) {
     if (config === void 0) { config = {}; }
     if (options === void 0) { options = {}; }
-    var actionMap$ = (config && config.actionMap$ && config.actionMap$.pipe(catchErr)) || of({});
-    var actions$ = (config && config.actions$ && config.actions$.pipe(catchErr)) || EMPTY;
+    var createdActions = (config &&
+        config.reducers$ &&
+        config.reducers$.pipe(map(createActions), catchErr, share())) ||
+        of({});
+    var actionMap$ = createdActions.pipe(filter(function (a) { return a.actionMap$; }), map(function (a) { return a.actionMap$; }));
+    var currentActions$ = createdActions.pipe(filter(function (a) { return a.actions; }), map(function (a) { return a.actions; }));
+    var actionStream$ = (config && config.actionStream$ && config.actionStream$.pipe(catchErr)) || EMPTY;
     var initialState$ = (config && config.initialState$ && config.initialState$.pipe(catchErr)) ||
         of({});
     var transducers$ = (config &&
@@ -280,26 +302,31 @@ function getDefaults(config, options) {
         of({});
     var destroy$ = (config && config.destroy$ && config.destroy$.pipe(catchErr)) || NEVER;
     var actionFop = fop[(options && options.actionFop) || FlattenOperator.concatMap];
-    var actionFactory$ = actionFactory(actions$, actionFop);
+    var actionFactory$ = actionFactory(actionStream$, actionFop);
     var stateFop = fop[(options && options.stateFop) || FlattenOperator.switchMap];
-    var scheduler = sched[(options && options.scheduler) || Scheduler.queue];
-    var isAnimationSched = scheduler instanceof AnimationFrameScheduler;
     var flattenState$ = function (fo) {
         if (fo === void 0) { fo = flattenObservable; }
-        return function (source) { return source.pipe(stateFop(flattenObservable)); };
+        return function (source) {
+            return source.pipe(stateFop(flattenObservable));
+        };
     };
-    var returnDefault = function () {
-        console.warn("\n  AnimationFrameScheduler can be used only in the browser.\n  Setting scheduler back to queue(default).\n");
-        return sched[Scheduler.queue];
-    };
+    var bufferSize = (options && options.bufferSize) || 1;
+    var scheduler = options &&
+        options.scheduler &&
+        !isWindow &&
+        isAnimationScheduler(sched[options.scheduler])
+        ? returnDefault()
+        : options && options.scheduler && sched[options.scheduler];
+    var windowTime = options && options.windowTime;
     var shareReplayConfig = {
         refCount: true,
-        bufferSize: (options && options.bufferSize) || 1,
-        scheduler: !isWindow && isAnimationSched ? returnDefault() : scheduler,
-        windowTime: (options && options.windowTime) || undefined
+        bufferSize: bufferSize,
+        scheduler: scheduler,
+        windowTime: windowTime
     };
     return {
         actionMap$: actionMap$,
+        currentActions$: currentActions$,
         initialState$: initialState$,
         transducers$: transducers$,
         destroy$: destroy$,
@@ -324,26 +351,27 @@ var Store = /** @class */ (function () {
      * @param {Object} config
      *  {
      *     actionMap$: of({}),
-     *     actions$: EMPTY, //(if not defined, no actions will be dispatched in the store)
+     *     actions$: EMPTY, // if not defined, no actions will be dispatched in the store
      *     initialState$: of({}),
      *     metaReducers$: of({}),
-     *     destroy$: NEVER //(if not defined, the state subscription will live forever)
+     *     destroy$: NEVER // if not defined, the state subscription will live forever
      *  }
      *
      * @param {Object} options
      *  {
-     *     actionFop: FlattenOps.concatMap, //(actions are executed in order of propagation)
-     *     stateFop: FlattenOps.switchMap //(will update to the latest received state, without waiting for previous async operations to finish)
-     *     scheduler: Scheduler.queue,
+     *     actionFop: FlattenOps.concatMap, // actions are executed in order of propagation
+     *     stateFop: FlattenOps.switchMap // will update to the latest received state, without waiting for previous async operations to finish
+     *     scheduler: undefined,
      *     windowTime: undefined
      *  }
      */
     function Store(config, options) {
         this.config = config;
         this.options = options;
-        var _a = getDefaults(this.config, this.options), actionMap$ = _a.actionMap$, transducers$ = _a.transducers$, actionFactory$ = _a.actionFactory$, initialState$ = _a.initialState$, flattenState$ = _a.flattenState$, destroy$ = _a.destroy$, shareReplayConfig = _a.shareReplayConfig;
-        this.state$ = combineLatest(actionMap$, transducers$, initialState$).pipe(map(reducerFactory), switchMap(actionFactory$), startWith(initialState$), flattenState$(), takeUntil(destroy$), shareReplay(shareReplayConfig));
+        var _a = getDefaults(this.config, this.options), actionMap$ = _a.actionMap$, currentActions$ = _a.currentActions$, transducers$ = _a.transducers$, actionFactory$ = _a.actionFactory$, initialState$ = _a.initialState$, flattenState$ = _a.flattenState$, destroy$ = _a.destroy$, shareReplayConfig = _a.shareReplayConfig;
+        this.state$ = combineLatest(actionMap$, transducers$, initialState$).pipe(map(reducerFactory$), concatMap(actionFactory$), startWith(initialState$), flattenState$(), takeUntil(destroy$), shareReplay(shareReplayConfig));
         this.state$.subscribe();
+        this.actions$ = currentActions$;
     }
     return Store;
 }());
@@ -352,8 +380,6 @@ function createStore(config, opts) {
     if (opts === void 0) { opts = {}; }
     return new Store(config, opts);
 }
-var state$ = createStore().state$;
-state$.subscribe(console.log);
 
 /**
  *
@@ -431,4 +457,4 @@ var Action = /** @class */ (function () {
     return Action;
 }());
 
-export { FlattenOperator, Scheduler, createSelector, select, Store, createStore, mapToObservable, ofType, catchErr, Action, mapPS, mapNS, mapA, filterPS, filterNS, filterA, reducePS, reduceNS, reduceA };
+export { FlattenOperator, Schedulers, createSelector, select, Store, createStore, mapToObservable, ofType, catchErr, createActions, Action, mapPS, mapNS, mapA, filterPS, filterNS, filterA, reducePS, reduceNS, reduceA };
