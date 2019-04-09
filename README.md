@@ -35,17 +35,16 @@ const increment = (state: State, action: Increment) => state + 1;
 const decrement = (state: State, action: Decrement) => state - 1;
  
 const initialState$ = of(initialState);
-const actions$ = actionQ.asObservable();
-const actionMap$ = of({
-  [Increment.name]: increment,
-  [Decrement.name]: decrement
-});
+const actionStream$ = actionQ.asObservable();
+const reducers$ = of([increment, decrement]);
  
-const { state$ } = createStore<State, AsyncType<ActionsUnion>>({
-  initialState$,
-  actions$,
-  actionMap$ 
+const { state$ } = createStore<State, ActionsUnion>({
+  actionStream$,
+  reducers$,
+  initialState$
 });
+
+state$.subscribe(console.log);
  
 const add1 = new Increment();
  
@@ -56,8 +55,6 @@ const add1times = n => interval(200).pipe(
  
 //dispaching an observable action
 actionQ.next(add1times(10));
- 
-state$.subscribe(console.log);
 ```
 
 ## Changelog

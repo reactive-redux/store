@@ -32,7 +32,7 @@ export declare const filterNS: <State, A extends IAction>(filterFn: (state: Stat
  */
 export declare const filterA: <State, A extends IAction>(filterFn: (action: A) => boolean) => (reducer: ReducerFn<State, A>) => (state: State, action: A) => State;
 /**
- *
+ * Reduce into state
  * @param reduceFn - a function to reduce the state and action together
  * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
  *
@@ -43,6 +43,7 @@ export declare const reducePS: <State, A extends IAction>(reducerFn: (state: Sta
 export declare const reduceNS: <State, A extends IAction>(reducerFn: (state: State, action: A) => State) => (reducer: ReducerFn<State, A>) => (state: State, action: A) => State;
 /**
  *
+ * Reduce into action
  * @param reduceFn - a function to reduce the state and action together
  * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
  */

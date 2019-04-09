@@ -39,7 +39,7 @@ const remove = (state: MockState, action: any) => ({
   data: state.data ? state.data.filter(v => v !== action.payload) : []
 });
 
-export const mockReducerMap: ActionMap<MockState> = {
+export const mockReducerMap: ActionMap<MockState, MockActionsUnion> = {
   [MockActionsEnum.ADD]: add,
   [MockActionsEnum.REMOVE]: remove
 };

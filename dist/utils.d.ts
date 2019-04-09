@@ -6,6 +6,6 @@ export declare const isValidAction: <State, ActionsUnion extends IAction>(action
 export declare const _pipe: (fns: any[]) => any;
 export declare const catchErr: import("rxjs").UnaryFunction<Observable<{}>, Observable<any>>;
 export declare const flattenObservable: <T>(o: Observable<T>) => Observable<T>;
-export declare const mapToObservable: <T>() => import("rxjs").UnaryFunction<Observable<AsyncType<T>>, Observable<Observable<T>>>;
+export declare const mapToObservable: <T>(value: AsyncType<T>) => Observable<T>;
 export declare function ofType<T extends IAction>(...allowedTypes: string[]): OperatorFunction<IAction, T>;
 export declare const createActions: ActionCreator;

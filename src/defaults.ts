@@ -11,11 +11,16 @@ import {
   FlattenOperator,
   StoreConfig,
   StoreOptions,
-  TransducerMap,
+  Transducers,
   IAction,
   Schedulers
 } from './interfaces';
-import { catchErr, flattenObservable, createActions } from './utils';
+import {
+  catchErr,
+  flattenObservable,
+  createActions,
+  mapToObservable
+} from './utils';
 import {
   switchMap,
   mergeMap,
@@ -23,11 +28,10 @@ import {
   exhaustMap,
   map,
   share,
-  filter
+  filter,
 } from 'rxjs/operators';
 import { AnimationFrameScheduler } from 'rxjs/internal/scheduler/AnimationFrameScheduler';
 import { ShareReplayConfig } from 'rxjs/internal/operators/shareReplay';
-import { actionFactory } from './action.factory';
 
 const fop: { [key in FlattenOperator]: any } = {
   switchMap,
@@ -86,24 +90,26 @@ export function getDefaults<State, ActionsUnion extends IAction>(
     (config && config.initialState$ && config.initialState$.pipe(catchErr)) ||
     of({});
 
-  const transducers$ =
+  const transducers$: Observable<Transducers<State, ActionsUnion>> =
     (config &&
       config.transducers$ &&
-      config.transducers$.pipe<TransducerMap<State, ActionsUnion>>(catchErr)) ||
-    of({});
+      config.transducers$.pipe<Transducers<State, ActionsUnion>>(catchErr)) ||
+    of([]);
 
   const destroy$: Observable<boolean> =
     (config && config.destroy$ && config.destroy$.pipe(catchErr)) || NEVER;
 
-  const actionFop: any =
+  const actionFlatten: any =
     fop[(options && options.actionFop) || FlattenOperator.concatMap];
 
-  const actionFactory$ = actionFactory<State, ActionsUnion>(actionStream$, actionFop);
+  const stateFlatten = fop[(options && options.stateFop) || FlattenOperator.switchMap];
 
-  const stateFop = fop[(options && options.stateFop) || FlattenOperator.switchMap];
-
-  const flattenState$ = (fo = flattenObservable) => (source: any) =>
-    source.pipe(stateFop(flattenObservable as any) as any);
+  const flattenState$ = (source: any) =>
+    source.pipe(
+      stateFlatten(flattenObservable),
+      map(mapToObservable),
+      stateFlatten(flattenObservable)
+    );
 
   const bufferSize = (options && options.bufferSize) || 1;
   const scheduler =
@@ -116,7 +122,7 @@ export function getDefaults<State, ActionsUnion extends IAction>(
   const windowTime = options && options.windowTime;
 
   const shareReplayConfig: ShareReplayConfig = {
-    refCount: true,
+    refCount: false,
     bufferSize,
     scheduler,
     windowTime
@@ -124,11 +130,12 @@ export function getDefaults<State, ActionsUnion extends IAction>(
 
   return {
     actionMap$,
+    actionStream$,
     currentActions$,
     initialState$,
     transducers$,
     destroy$,
-    actionFactory$,
+    actionFlatten,
     flattenState$,
     shareReplayConfig
   };

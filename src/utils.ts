@@ -1,5 +1,5 @@
 import { pipe, from, of, isObservable, Observable, OperatorFunction } from 'rxjs';
-import { map, catchError, filter } from 'rxjs/operators';
+import { catchError, filter } from 'rxjs/operators';
 import {
   AsyncType,
   ActionMap,
@@ -21,20 +21,17 @@ export const isValidAction = <State, ActionsUnion extends IAction>(
   typeof map[action.type] === 'function';
 
 export const _pipe = (fns: any[]) =>
-  fns.reduceRight((f, g) => (...args: any[]) => f(g(...args)));
+  fns.reduce((f, g) => (...args: any[]) => f(g(...args)));
 
 export const catchErr = pipe(catchError(e => of(e)));
 
 export const flattenObservable = <T>(o: Observable<T>) => o.pipe<T>(catchErr);
 
-export const mapToObservable = <T>() =>
-  pipe(
-    map((value: AsyncType<T>) => {
-      if (isObservable(value)) return value;
-      if (value instanceof Promise) return from(value);
-      return of(value);
-    })
-  );
+export const mapToObservable = <T>(value: AsyncType<T>): Observable<T> => {
+  if (isObservable(value)) return value;
+  if (value instanceof Promise) return from(value);
+  return of(value);
+};
 
 export function ofType<T extends IAction>(
   ...allowedTypes: string[]

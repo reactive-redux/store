@@ -13,7 +13,7 @@ export declare class Store<State, ActionsUnion extends IAction = any> {
     private options?;
     state$: Observable<State>;
     actions$: Observable<{
-        [key: string]: (payload?: unknown) => ActionsUnion;
+        [key: string]: <R, T>(payload?: T) => R;
     }>;
     /**
      * Default configuration
@@ -33,6 +33,7 @@ export declare class Store<State, ActionsUnion extends IAction = any> {
      *     stateFop: FlattenOps.switchMap // will update to the latest received state, without waiting for previous async operations to finish
      *     scheduler: undefined,
      *     windowTime: undefined
+     *     bufferSize: 1
      *  }
      */
     constructor(config?: StoreConfig<State, ActionsUnion> | undefined, options?: StoreOptions | undefined);

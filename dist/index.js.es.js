@@ -202,7 +202,7 @@ var isValidAction = function (action, map$$1) {
         typeof map$$1[action.type] === 'function';
 };
 var _pipe = function (fns) {
-    return fns.reduceRight(function (f, g) { return function () {
+    return fns.reduce(function (f, g) { return function () {
         var args = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
@@ -212,14 +212,12 @@ var _pipe = function (fns) {
 };
 var catchErr = pipe(catchError(function (e) { return of(e); }));
 var flattenObservable = function (o) { return o.pipe(catchErr); };
-var mapToObservable = function () {
-    return pipe(map(function (value) {
-        if (isObservable(value))
-            return value;
-        if (value instanceof Promise)
-            return from(value);
-        return of(value);
-    }));
+var mapToObservable = function (value) {
+    if (isObservable(value))
+        return value;
+    if (value instanceof Promise)
+        return from(value);
+    return of(value);
 };
 function ofType() {
     var allowedTypes = [];
@@ -242,26 +240,16 @@ var createActions = function (actions) {
 };
 
 function reducerFactory$(_a) {
-    var _b = __read(_a, 3), actionMap = _b[0], transducerMap = _b[1], initialState = _b[2];
-    var transducers = Object.keys(transducerMap).map(function (key) { return transducerMap[key]; });
-    var hasT = transducers.length > 0;
-    var _actionMap = __assign({}, actionMap);
+    var _b = __read(_a, 3), actionMap = _b[0], transducers = _b[1], initialState = _b[2];
     var reducer = function (state, action) {
-        if (!isValidAction(action, _actionMap))
+        if (!isValidAction(action, actionMap))
             return state;
-        var actionReducer = _actionMap[action.type];
-        return hasT
+        var actionReducer = actionMap[action.type];
+        return transducers.length > 0
             ? _pipe(transducers)(actionReducer)(state, action)
             : actionReducer(state, action);
     };
     return scan(reducer, initialState);
-}
-
-// flatten: FlattenOperator from ./interfaces
-function actionFactory(actions$, flatten) {
-    return function (reducer) {
-        return actions$.pipe(filter(isObject), mapToObservable(), flatten(flattenObservable), reducer, mapToObservable());
-    };
 }
 
 var fop = {
@@ -299,16 +287,12 @@ function getDefaults(config, options) {
     var transducers$ = (config &&
         config.transducers$ &&
         config.transducers$.pipe(catchErr)) ||
-        of({});
+        of([]);
     var destroy$ = (config && config.destroy$ && config.destroy$.pipe(catchErr)) || NEVER;
-    var actionFop = fop[(options && options.actionFop) || FlattenOperator.concatMap];
-    var actionFactory$ = actionFactory(actionStream$, actionFop);
-    var stateFop = fop[(options && options.stateFop) || FlattenOperator.switchMap];
-    var flattenState$ = function (fo) {
-        if (fo === void 0) { fo = flattenObservable; }
-        return function (source) {
-            return source.pipe(stateFop(flattenObservable));
-        };
+    var actionFlatten = fop[(options && options.actionFop) || FlattenOperator.concatMap];
+    var stateFlatten = fop[(options && options.stateFop) || FlattenOperator.switchMap];
+    var flattenState$ = function (source) {
+        return source.pipe(stateFlatten(flattenObservable), map(mapToObservable), stateFlatten(flattenObservable));
     };
     var bufferSize = (options && options.bufferSize) || 1;
     var scheduler = options &&
@@ -319,18 +303,19 @@ function getDefaults(config, options) {
         : options && options.scheduler && sched[options.scheduler];
     var windowTime = options && options.windowTime;
     var shareReplayConfig = {
-        refCount: true,
+        refCount: false,
         bufferSize: bufferSize,
         scheduler: scheduler,
         windowTime: windowTime
     };
     return {
         actionMap$: actionMap$,
+        actionStream$: actionStream$,
         currentActions$: currentActions$,
         initialState$: initialState$,
         transducers$: transducers$,
         destroy$: destroy$,
-        actionFactory$: actionFactory$,
+        actionFlatten: actionFlatten,
         flattenState$: flattenState$,
         shareReplayConfig: shareReplayConfig
     };
@@ -363,13 +348,16 @@ var Store = /** @class */ (function () {
      *     stateFop: FlattenOps.switchMap // will update to the latest received state, without waiting for previous async operations to finish
      *     scheduler: undefined,
      *     windowTime: undefined
+     *     bufferSize: 1
      *  }
      */
     function Store(config, options) {
         this.config = config;
         this.options = options;
-        var _a = getDefaults(this.config, this.options), actionMap$ = _a.actionMap$, currentActions$ = _a.currentActions$, transducers$ = _a.transducers$, actionFactory$ = _a.actionFactory$, initialState$ = _a.initialState$, flattenState$ = _a.flattenState$, destroy$ = _a.destroy$, shareReplayConfig = _a.shareReplayConfig;
-        this.state$ = combineLatest(actionMap$, transducers$, initialState$).pipe(map(reducerFactory$), concatMap(actionFactory$), startWith(initialState$), flattenState$(), takeUntil(destroy$), shareReplay(shareReplayConfig));
+        var _a = getDefaults(this.config, this.options), actionMap$ = _a.actionMap$, actionStream$ = _a.actionStream$, currentActions$ = _a.currentActions$, transducers$ = _a.transducers$, actionFlatten = _a.actionFlatten, initialState$ = _a.initialState$, flattenState$ = _a.flattenState$, destroy$ = _a.destroy$, shareReplayConfig = _a.shareReplayConfig;
+        this.state$ = combineLatest(actionMap$, transducers$, initialState$).pipe(map(reducerFactory$), concatMap(function (reducer$) {
+            return actionStream$.pipe(filter(isObject), map(mapToObservable), actionFlatten(flattenObservable), reducer$, map(mapToObservable));
+        }), startWith(initialState$), flattenState$, takeUntil(destroy$), shareReplay(shareReplayConfig));
         this.state$.subscribe();
         this.actions$ = currentActions$;
     }
@@ -421,7 +409,7 @@ var filterA = function (filterFn) { return function (reducer) { return function 
     return filterFn(action) ? reducer(state, action) : state;
 }; }; };
 /**
- *
+ * Reduce into state
  * @param reduceFn - a function to reduce the state and action together
  * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
  *
@@ -436,6 +424,7 @@ var reduceNS = function (reducerFn) { return function (reducer) { return functio
 }; }; };
 /**
  *
+ * Reduce into action
  * @param reduceFn - a function to reduce the state and action together
  * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
  */
@@ -449,7 +438,7 @@ var Action = /** @class */ (function () {
     }
     Object.defineProperty(Action.prototype, "type", {
         get: function () {
-            return this.constructor.name;
+            return this.constructor.name.toLowerCase();
         },
         enumerable: true,
         configurable: true

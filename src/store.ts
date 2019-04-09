@@ -1,8 +1,16 @@
 import { Observable, combineLatest } from 'rxjs';
-import { startWith, shareReplay, takeUntil, concatMap, map } from 'rxjs/operators';
+import {
+  startWith,
+  shareReplay,
+  takeUntil,
+  concatMap,
+  map,
+  filter
+} from 'rxjs/operators';
 import { reducerFactory$ } from './reducer.factory';
 import { StoreConfig, StoreOptions, IAction } from './interfaces';
 import { getDefaults } from './defaults';
+import { mapToObservable, isObject, flattenObservable } from './utils';
 
 /**
  * Reactive state container based on RxJS (https://rxjs.dev/)
@@ -15,7 +23,7 @@ import { getDefaults } from './defaults';
 export class Store<State, ActionsUnion extends IAction = any> {
   public state$: Observable<State>;
   public actions$: Observable<{
-    [key: string]: (payload?: unknown) => ActionsUnion;
+    [key: string]: <R, T>(payload?: T) => R;
   }>;
 
   /**
@@ -36,6 +44,7 @@ export class Store<State, ActionsUnion extends IAction = any> {
    *     stateFop: FlattenOps.switchMap // will update to the latest received state, without waiting for previous async operations to finish
    *     scheduler: undefined,
    *     windowTime: undefined
+   *     bufferSize: 1
    *  }
    */
   constructor(
@@ -44,9 +53,10 @@ export class Store<State, ActionsUnion extends IAction = any> {
   ) {
     const {
       actionMap$,
+      actionStream$,
       currentActions$,
       transducers$,
-      actionFactory$,
+      actionFlatten,
       initialState$,
       flattenState$,
       destroy$,
@@ -55,9 +65,17 @@ export class Store<State, ActionsUnion extends IAction = any> {
 
     this.state$ = combineLatest(actionMap$, transducers$, initialState$).pipe(
       map(reducerFactory$),
-      concatMap(actionFactory$),
+      concatMap(reducer$ =>
+        actionStream$.pipe(
+          filter(isObject),
+          map(mapToObservable),
+          actionFlatten(flattenObservable),
+          reducer$,
+          map(mapToObservable)
+        )
+      ),
       startWith(initialState$),
-      flattenState$(),
+      flattenState$,
       takeUntil<State>(destroy$),
       shareReplay(shareReplayConfig)
     );

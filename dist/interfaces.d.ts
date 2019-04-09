@@ -20,7 +20,7 @@ export interface StoreConfig<State, ActionsUnion extends IAction> {
     reducers$?: ConfigActionMap<State, ActionsUnion>;
     actionStream$?: Observable<ActionsUnion | AsyncType<ActionsUnion>>;
     initialState$?: Observable<State>;
-    transducers$?: Observable<TransducerMap<State, ActionsUnion>>;
+    transducers$?: Observable<Transducers<State, ActionsUnion>>;
     destroy$?: Observable<any>;
 }
 export interface StoreOptions {
@@ -36,9 +36,7 @@ export declare type ActionMap<State, A extends IAction> = {
     [key: string]: ReducerFn<State, A>;
 };
 export declare type TransducerFn<State, A extends IAction> = (reducer: ReducerFn<State, A>) => ReducerFn<State, A>;
-export declare type TransducerMap<T, A extends IAction> = {
-    [key: string]: TransducerFn<T, A>;
-};
+export declare type Transducers<T, A extends IAction> = TransducerFn<T, A>[];
 export declare type ActionCreator = <T, A extends IAction>(a: any[]) => {
     actions: {
         [key: string]: (payload?: unknown) => any;

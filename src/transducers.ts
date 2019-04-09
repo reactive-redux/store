@@ -58,7 +58,7 @@ export const filterA = <State, A extends IAction>(
 };
 
 /**
- *
+ * Reduce into state
  * @param reduceFn - a function to reduce the state and action together
  * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
  *
@@ -79,6 +79,7 @@ export const reduceNS = <State, A extends IAction>(
 
 /**
  *
+ * Reduce into action
  * @param reduceFn - a function to reduce the state and action together
  * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
  */
