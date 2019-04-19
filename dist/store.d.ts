@@ -11,8 +11,10 @@ import { StoreConfig, StoreOptions, IAction } from './interfaces';
 export declare class Store<State, ActionsUnion extends IAction = any> {
     private config?;
     private options?;
+    private _actions$;
     state$: Observable<State>;
-    actions$: Observable<{
+    actions$: Observable<ActionsUnion>;
+    actionFactory$: Observable<{
         [key: string]: <R, T>(payload?: T) => R;
     }>;
     /**
@@ -20,10 +22,10 @@ export declare class Store<State, ActionsUnion extends IAction = any> {
      *
      * @param {Object} config
      *  {
-     *     actionMap$: of({}),
-     *     actions$: EMPTY, // if not defined, no actions will be dispatched in the store
+     *     reducers$: of([]),
+     *     actionStream$: EMPTY, // if not defined, no actions will be dispatched in the store
      *     initialState$: of({}),
-     *     metaReducers$: of({}),
+     *     transducers$: of({}),
      *     destroy$: NEVER // if not defined, the state subscription will live forever
      *  }
      *
@@ -31,7 +33,6 @@ export declare class Store<State, ActionsUnion extends IAction = any> {
      *  {
      *     actionFop: FlattenOps.concatMap, // actions are executed in order of propagation
      *     stateFop: FlattenOps.switchMap // will update to the latest received state, without waiting for previous async operations to finish
-     *     scheduler: undefined,
      *     windowTime: undefined
      *     bufferSize: 1
      *  }

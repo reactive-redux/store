@@ -4,7 +4,7 @@ import { ShareReplayConfig } from 'rxjs/internal/operators/shareReplay';
 export declare function getDefaults<State, ActionsUnion extends IAction>(config?: StoreConfig<State, ActionsUnion>, options?: StoreOptions): {
     actionMap$: Observable<ActionMap<State, ActionsUnion>>;
     actionStream$: Observable<AsyncType<ActionsUnion>>;
-    currentActions$: Observable<{
+    actionFactory$: Observable<{
         [key: string]: (payload?: unknown) => any;
     }>;
     initialState$: Observable<State>;

@@ -41,8 +41,7 @@ export function ofType<T extends IAction>(
   );
 }
 
-const capitalize = (str: string) => str.replace(/^\w/, c => c.toUpperCase());
-export const createActions: ActionCreator = (actions: ReducerFn<any, any>[]) =>
+export const createActions: ActionCreator = actions =>
   actions.reduce(
     (acc, curr) => {
       if (typeof curr !== 'function') return acc;
@@ -50,7 +49,7 @@ export const createActions: ActionCreator = (actions: ReducerFn<any, any>[]) =>
       return {
         actions: {
           ...acc.actions,
-          [capitalize(curr.name)]: (payload: any) => ({ type: curr.name, payload })
+          [`${curr.name}Action`]: (payload: any) => ({ type: curr.name, payload })
         },
         actionMap$: { ...acc.actionMap$, [curr.name]: curr }
       };

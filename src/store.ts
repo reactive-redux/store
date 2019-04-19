@@ -1,11 +1,12 @@
-import { Observable, combineLatest } from 'rxjs';
+import { Observable, combineLatest, Subject } from 'rxjs';
 import {
   startWith,
   shareReplay,
   takeUntil,
   concatMap,
   map,
-  filter
+  filter,
+  tap
 } from 'rxjs/operators';
 import { reducerFactory$ } from './reducer.factory';
 import { StoreConfig, StoreOptions, IAction } from './interfaces';
@@ -21,8 +22,11 @@ import { mapToObservable, isObject, flattenObservable } from './utils';
  * @type ActionsUnion - type union of all the actions
  */
 export class Store<State, ActionsUnion extends IAction = any> {
+  private _actions$ = new Subject<ActionsUnion>();
+
   public state$: Observable<State>;
-  public actions$: Observable<{
+  public actions$: Observable<ActionsUnion>;
+  public actionFactory$: Observable<{
     [key: string]: <R, T>(payload?: T) => R;
   }>;
 
@@ -31,10 +35,10 @@ export class Store<State, ActionsUnion extends IAction = any> {
    *
    * @param {Object} config
    *  {
-   *     actionMap$: of({}),
-   *     actions$: EMPTY, // if not defined, no actions will be dispatched in the store
+   *     reducers$: of([]),
+   *     actionStream$: EMPTY, // if not defined, no actions will be dispatched in the store
    *     initialState$: of({}),
-   *     metaReducers$: of({}),
+   *     transducers$: of({}),
    *     destroy$: NEVER // if not defined, the state subscription will live forever
    *  }
    *
@@ -42,7 +46,6 @@ export class Store<State, ActionsUnion extends IAction = any> {
    *  {
    *     actionFop: FlattenOps.concatMap, // actions are executed in order of propagation
    *     stateFop: FlattenOps.switchMap // will update to the latest received state, without waiting for previous async operations to finish
-   *     scheduler: undefined,
    *     windowTime: undefined
    *     bufferSize: 1
    *  }
@@ -54,7 +57,7 @@ export class Store<State, ActionsUnion extends IAction = any> {
     const {
       actionMap$,
       actionStream$,
-      currentActions$,
+      actionFactory$,
       transducers$,
       actionFlatten,
       initialState$,
@@ -70,6 +73,7 @@ export class Store<State, ActionsUnion extends IAction = any> {
           filter(isObject),
           map(mapToObservable),
           actionFlatten(flattenObservable),
+          tap<ActionsUnion>(this._actions$),
           reducer$,
           map(mapToObservable)
         )
@@ -82,7 +86,9 @@ export class Store<State, ActionsUnion extends IAction = any> {
 
     this.state$.subscribe();
 
-    this.actions$ = currentActions$;
+    this.actionFactory$ = actionFactory$;
+
+    this.actions$ = this._actions$.asObservable();
   }
 }
 

@@ -1,4 +1,4 @@
-export { AsyncType, FlattenOperator, Schedulers, ReducerFn } from './interfaces';
+export { AsyncType, FlattenOperator, ReducerFn } from './interfaces';
 export { createSelector, select } from './selectors';
 export { Store, createStore } from './store';
 export * from './transducers';

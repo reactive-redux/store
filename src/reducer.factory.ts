@@ -7,7 +7,7 @@ export function reducerFactory$<State, ActionsUnion extends IAction>([
   transducers,
   initialState
 ]: [ActionMap<State, ActionsUnion>, Transducers<State, ActionsUnion>, State]) {
-  const reducer = (state: State, action: ActionsUnion): State => {
+  function reducer(state: State, action: ActionsUnion): State {
     if (!isValidAction(action, actionMap)) return state;
 
     const actionReducer = actionMap[action.type];
@@ -15,7 +15,7 @@ export function reducerFactory$<State, ActionsUnion extends IAction>([
     return transducers.length > 0
       ? _pipe(transducers)(actionReducer)(state, action)
       : actionReducer(state, action);
-  };
+  }
 
   return scan(reducer, initialState);
 }

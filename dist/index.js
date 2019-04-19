@@ -1,8 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('rxjs/operators'), require('rxjs'), require('rxjs/internal/scheduler/AnimationFrameScheduler')) :
-  typeof define === 'function' && define.amd ? define(['exports', 'rxjs/operators', 'rxjs', 'rxjs/internal/scheduler/AnimationFrameScheduler'], factory) :
-  (global = global || self, factory(global['@reactive-redux/store'] = {}, global.operators, global.rxjs, global.AnimationFrameScheduler));
-}(this, function (exports, operators, rxjs, AnimationFrameScheduler) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('rxjs/operators'), require('rxjs')) :
+  typeof define === 'function' && define.amd ? define(['exports', 'rxjs/operators', 'rxjs'], factory) :
+  (global = global || self, factory(global['@reactive-redux/store'] = {}, global.operators, global.rxjs));
+}(this, function (exports, operators, rxjs) { 'use strict';
 
   (function (FlattenOperator) {
       FlattenOperator["switchMap"] = "switchMap";
@@ -10,12 +10,6 @@
       FlattenOperator["concatMap"] = "concatMap";
       FlattenOperator["exhaustMap"] = "exhaustMap";
   })(exports.FlattenOperator || (exports.FlattenOperator = {}));
-  (function (Schedulers) {
-      Schedulers["queue"] = "queueScheduler";
-      Schedulers["asap"] = "asapScheduler";
-      Schedulers["animationFrame"] = "animationFrameScheduler";
-      Schedulers["async"] = "asyncScheduler";
-  })(exports.Schedulers || (exports.Schedulers = {}));
 
   /*! *****************************************************************************
   Copyright (c) Microsoft Corporation. All rights reserved.
@@ -226,14 +220,13 @@
       }
       return operators.filter(function (action) { return allowedTypes.some(function (type) { return type === action.type; }); });
   }
-  var capitalize = function (str) { return str.replace(/^\w/, function (c) { return c.toUpperCase(); }); };
   var createActions = function (actions) {
       return actions.reduce(function (acc, curr) {
           var _a, _b;
           if (typeof curr !== 'function')
               return acc;
           return {
-              actions: __assign({}, acc.actions, (_a = {}, _a[capitalize(curr.name)] = function (payload) { return ({ type: curr.name, payload: payload }); }, _a)),
+              actions: __assign({}, acc.actions, (_a = {}, _a[curr.name + "Action"] = function (payload) { return ({ type: curr.name, payload: payload }); }, _a)),
               actionMap$: __assign({}, acc.actionMap$, (_b = {}, _b[curr.name] = curr, _b))
           };
       }, { actionMap$: {}, actions: {} });
@@ -241,14 +234,14 @@
 
   function reducerFactory$(_a) {
       var _b = __read(_a, 3), actionMap = _b[0], transducers = _b[1], initialState = _b[2];
-      var reducer = function (state, action) {
+      function reducer(state, action) {
           if (!isValidAction(action, actionMap))
               return state;
           var actionReducer = actionMap[action.type];
           return transducers.length > 0
               ? _pipe(transducers)(actionReducer)(state, action)
               : actionReducer(state, action);
-      };
+      }
       return operators.scan(reducer, initialState);
   }
 
@@ -258,29 +251,15 @@
       concatMap: operators.concatMap,
       exhaustMap: operators.exhaustMap
   };
-  var sched = {
-      queueScheduler: rxjs.queueScheduler,
-      asapScheduler: rxjs.asapScheduler,
-      animationFrameScheduler: rxjs.animationFrameScheduler,
-      asyncScheduler: rxjs.asyncScheduler
-  };
-  var isWindow = typeof window !== 'undefined' && !!window;
-  var isAnimationScheduler = function (scheduler) {
-      return scheduler instanceof AnimationFrameScheduler.AnimationFrameScheduler;
-  };
-  var returnDefault = function () {
-      console.warn("AnimationFrameScheduler can be used only in the browser.");
-      return undefined;
-  };
   function getDefaults(config, options) {
       if (config === void 0) { config = {}; }
       if (options === void 0) { options = {}; }
       var createdActions = (config &&
           config.reducers$ &&
-          config.reducers$.pipe(operators.map(createActions), catchErr, operators.share())) ||
+          config.reducers$.pipe(operators.filter(function (r) { return isObject(r) || Array.isArray(r); }), operators.map(function (r) { return (Array.isArray(r) ? createActions(r) : r); }), catchErr, operators.share())) ||
           rxjs.of({});
       var actionMap$ = createdActions.pipe(operators.filter(function (a) { return a.actionMap$; }), operators.map(function (a) { return a.actionMap$; }));
-      var currentActions$ = createdActions.pipe(operators.filter(function (a) { return a.actions; }), operators.map(function (a) { return a.actions; }));
+      var actionFactory$ = createdActions.pipe(operators.filter(function (a) { return a.actions; }), operators.map(function (a) { return a.actions; }));
       var actionStream$ = (config && config.actionStream$ && config.actionStream$.pipe(catchErr)) || rxjs.EMPTY;
       var initialState$ = (config && config.initialState$ && config.initialState$.pipe(catchErr)) ||
           rxjs.of({});
@@ -295,23 +274,16 @@
           return source.pipe(stateFlatten(flattenObservable), operators.map(mapToObservable), stateFlatten(flattenObservable));
       };
       var bufferSize = (options && options.bufferSize) || 1;
-      var scheduler = options &&
-          options.scheduler &&
-          !isWindow &&
-          isAnimationScheduler(sched[options.scheduler])
-          ? returnDefault()
-          : options && options.scheduler && sched[options.scheduler];
       var windowTime = options && options.windowTime;
       var shareReplayConfig = {
           refCount: false,
           bufferSize: bufferSize,
-          scheduler: scheduler,
           windowTime: windowTime
       };
       return {
           actionMap$: actionMap$,
           actionStream$: actionStream$,
-          currentActions$: currentActions$,
+          actionFactory$: actionFactory$,
           initialState$: initialState$,
           transducers$: transducers$,
           destroy$: destroy$,
@@ -335,10 +307,10 @@
        *
        * @param {Object} config
        *  {
-       *     actionMap$: of({}),
-       *     actions$: EMPTY, // if not defined, no actions will be dispatched in the store
+       *     reducers$: of([]),
+       *     actionStream$: EMPTY, // if not defined, no actions will be dispatched in the store
        *     initialState$: of({}),
-       *     metaReducers$: of({}),
+       *     transducers$: of({}),
        *     destroy$: NEVER // if not defined, the state subscription will live forever
        *  }
        *
@@ -346,20 +318,22 @@
        *  {
        *     actionFop: FlattenOps.concatMap, // actions are executed in order of propagation
        *     stateFop: FlattenOps.switchMap // will update to the latest received state, without waiting for previous async operations to finish
-       *     scheduler: undefined,
        *     windowTime: undefined
        *     bufferSize: 1
        *  }
        */
       function Store(config, options) {
+          var _this = this;
           this.config = config;
           this.options = options;
-          var _a = getDefaults(this.config, this.options), actionMap$ = _a.actionMap$, actionStream$ = _a.actionStream$, currentActions$ = _a.currentActions$, transducers$ = _a.transducers$, actionFlatten = _a.actionFlatten, initialState$ = _a.initialState$, flattenState$ = _a.flattenState$, destroy$ = _a.destroy$, shareReplayConfig = _a.shareReplayConfig;
+          this._actions$ = new rxjs.Subject();
+          var _a = getDefaults(this.config, this.options), actionMap$ = _a.actionMap$, actionStream$ = _a.actionStream$, actionFactory$ = _a.actionFactory$, transducers$ = _a.transducers$, actionFlatten = _a.actionFlatten, initialState$ = _a.initialState$, flattenState$ = _a.flattenState$, destroy$ = _a.destroy$, shareReplayConfig = _a.shareReplayConfig;
           this.state$ = rxjs.combineLatest(actionMap$, transducers$, initialState$).pipe(operators.map(reducerFactory$), operators.concatMap(function (reducer$) {
-              return actionStream$.pipe(operators.filter(isObject), operators.map(mapToObservable), actionFlatten(flattenObservable), reducer$, operators.map(mapToObservable));
+              return actionStream$.pipe(operators.filter(isObject), operators.map(mapToObservable), actionFlatten(flattenObservable), operators.tap(_this._actions$), reducer$, operators.map(mapToObservable));
           }), operators.startWith(initialState$), flattenState$, operators.takeUntil(destroy$), operators.shareReplay(shareReplayConfig));
           this.state$.subscribe();
-          this.actions$ = currentActions$;
+          this.actionFactory$ = actionFactory$;
+          this.actions$ = this._actions$.asObservable();
       }
       return Store;
   }());

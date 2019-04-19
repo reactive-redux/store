@@ -1,10 +1,5 @@
 import { Observable, of, EMPTY, NEVER } from 'rxjs';
-import {
-  queueScheduler,
-  asapScheduler,
-  animationFrameScheduler,
-  asyncScheduler
-} from 'rxjs';
+
 import {
   ActionMap,
   AsyncType,
@@ -12,14 +7,14 @@ import {
   StoreConfig,
   StoreOptions,
   Transducers,
-  IAction,
-  Schedulers
+  IAction
 } from './interfaces';
 import {
   catchErr,
   flattenObservable,
   createActions,
-  mapToObservable
+  mapToObservable,
+  isObject
 } from './utils';
 import {
   switchMap,
@@ -28,9 +23,8 @@ import {
   exhaustMap,
   map,
   share,
-  filter,
+  filter
 } from 'rxjs/operators';
-import { AnimationFrameScheduler } from 'rxjs/internal/scheduler/AnimationFrameScheduler';
 import { ShareReplayConfig } from 'rxjs/internal/operators/shareReplay';
 
 const fop: { [key in FlattenOperator]: any } = {
@@ -38,23 +32,6 @@ const fop: { [key in FlattenOperator]: any } = {
   mergeMap,
   concatMap,
   exhaustMap
-};
-
-const sched: { [key in Schedulers]: any } = {
-  queueScheduler,
-  asapScheduler,
-  animationFrameScheduler,
-  asyncScheduler
-};
-
-const isWindow = typeof window !== 'undefined' && !!window;
-
-const isAnimationScheduler = (scheduler: any) =>
-  scheduler instanceof AnimationFrameScheduler;
-
-const returnDefault = () => {
-  console.warn(`AnimationFrameScheduler can be used only in the browser.`);
-  return undefined;
 };
 
 export function getDefaults<State, ActionsUnion extends IAction>(
@@ -65,7 +42,8 @@ export function getDefaults<State, ActionsUnion extends IAction>(
     (config &&
       config.reducers$ &&
       config.reducers$.pipe(
-        map(createActions),
+        filter(r => isObject(r) || Array.isArray(r)),
+        map(r => (Array.isArray(r) ? createActions<State, ActionsUnion>(r) : r)),
         catchErr,
         share()
       )) ||
@@ -76,7 +54,7 @@ export function getDefaults<State, ActionsUnion extends IAction>(
     map(a => a.actionMap$)
   );
 
-  const currentActions$: Observable<{
+  const actionFactory$: Observable<{
     [key: string]: (payload?: unknown) => any;
   }> = createdActions.pipe(
     filter(a => a.actions),
@@ -102,7 +80,8 @@ export function getDefaults<State, ActionsUnion extends IAction>(
   const actionFlatten: any =
     fop[(options && options.actionFop) || FlattenOperator.concatMap];
 
-  const stateFlatten = fop[(options && options.stateFop) || FlattenOperator.switchMap];
+  const stateFlatten =
+    fop[(options && options.stateFop) || FlattenOperator.switchMap];
 
   const flattenState$ = (source: any) =>
     source.pipe(
@@ -112,26 +91,18 @@ export function getDefaults<State, ActionsUnion extends IAction>(
     );
 
   const bufferSize = (options && options.bufferSize) || 1;
-  const scheduler =
-    options &&
-    options.scheduler &&
-    !isWindow &&
-    isAnimationScheduler(sched[options.scheduler])
-      ? returnDefault()
-      : options && options.scheduler && sched[options.scheduler];
   const windowTime = options && options.windowTime;
 
   const shareReplayConfig: ShareReplayConfig = {
     refCount: false,
     bufferSize,
-    scheduler,
     windowTime
   };
 
   return {
     actionMap$,
     actionStream$,
-    currentActions$,
+    actionFactory$,
     initialState$,
     transducers$,
     destroy$,
