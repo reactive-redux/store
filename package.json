@@ -1,6 +1,6 @@
 {
   "name": "@reactive-redux/store",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "description": "Reactive state container",
   "author": "Zdravko Tatarski",
   "license": "MIT",
@@ -14,7 +14,7 @@
   "scripts": {
     "start": "nodemon",
     "build": "npm run clean:dist && ./node_modules/.bin/rollup -c",
-    "npm:publish": "npm run build && npm publish",
+    "push:publish": "git push --follow-tags && npm publish",
     "test": "./node_modules/.bin/jest",
     "clean:dist": "rm -rf ./dist"
   },
