@@ -203,7 +203,7 @@ var _pipe = function (fns) {
     }; });
 };
 var catchErr = pipe(catchError(function (e) { return of(e); }));
-var flattenObservable = function (o) { return o.pipe(catchErr); };
+var flatCatch = function (o) { return o.pipe(catchErr); };
 var mapToObservable = function (value) {
     if (isObservable(value))
         return value;
@@ -218,13 +218,14 @@ function ofType() {
     }
     return filter(function (action) { return allowedTypes.some(function (type) { return type === action.type; }); });
 }
+var capitalize = function (str) { return str.replace(/^\w/, function (c) { return c.toUpperCase(); }); };
 var createActions = function (actions) {
     return actions.reduce(function (acc, curr) {
         var _a, _b;
         if (typeof curr !== 'function')
             return acc;
         return {
-            actions: __assign({}, acc.actions, (_a = {}, _a[curr.name + "Action"] = function (payload) { return ({ type: curr.name, payload: payload }); }, _a)),
+            actions: __assign({}, acc.actions, (_a = {}, _a[capitalize(curr.name)] = function (payload) { return ({ type: curr.name, payload: payload }); }, _a)),
             actionMap$: __assign({}, acc.actionMap$, (_b = {}, _b[curr.name] = curr, _b))
         };
     }, { actionMap$: {}, actions: {} });
@@ -269,7 +270,7 @@ function getDefaults(config, options) {
     var actionFlatten = fop[(options && options.actionFop) || FlattenOperator.concatMap];
     var stateFlatten = fop[(options && options.stateFop) || FlattenOperator.switchMap];
     var flattenState$ = function (source) {
-        return source.pipe(stateFlatten(flattenObservable), map(mapToObservable), stateFlatten(flattenObservable));
+        return source.pipe(stateFlatten(flatCatch), map(mapToObservable), stateFlatten(flatCatch));
     };
     var bufferSize = (options && options.bufferSize) || 1;
     var windowTime = options && options.windowTime;
@@ -327,7 +328,7 @@ var Store = /** @class */ (function () {
         this._actions$ = new Subject();
         var _a = getDefaults(this.config, this.options), actionMap$ = _a.actionMap$, actionStream$ = _a.actionStream$, actionFactory$ = _a.actionFactory$, transducers$ = _a.transducers$, actionFlatten = _a.actionFlatten, initialState$ = _a.initialState$, flattenState$ = _a.flattenState$, destroy$ = _a.destroy$, shareReplayConfig = _a.shareReplayConfig;
         this.state$ = combineLatest(actionMap$, transducers$, initialState$).pipe(map(reducerFactory$), concatMap(function (reducer$) {
-            return actionStream$.pipe(filter(isObject), map(mapToObservable), actionFlatten(flattenObservable), tap(_this._actions$), reducer$, map(mapToObservable));
+            return actionStream$.pipe(filter(isObject), map(mapToObservable), actionFlatten(flatCatch), tap(_this._actions$), reducer$, map(mapToObservable));
         }), startWith(initialState$), flattenState$, takeUntil(destroy$), shareReplay(shareReplayConfig));
         this.state$.subscribe();
         this.actionFactory$ = actionFactory$;

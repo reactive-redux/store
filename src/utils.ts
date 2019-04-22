@@ -25,7 +25,7 @@ export const _pipe = (fns: any[]) =>
 
 export const catchErr = pipe(catchError(e => of(e)));
 
-export const flattenObservable = <T>(o: Observable<T>) => o.pipe<T>(catchErr);
+export const flatCatch = <T>(o: Observable<T>) => o.pipe<T>(catchErr);
 
 export const mapToObservable = <T>(value: AsyncType<T>): Observable<T> => {
   if (isObservable(value)) return value;
@@ -41,6 +41,7 @@ export function ofType<T extends IAction>(
   );
 }
 
+const capitalize = (str: string) => str.replace(/^\w/, c => c.toUpperCase());
 export const createActions: ActionCreator = actions =>
   actions.reduce(
     (acc, curr) => {
@@ -49,7 +50,7 @@ export const createActions: ActionCreator = actions =>
       return {
         actions: {
           ...acc.actions,
-          [`${curr.name}Action`]: (payload: any) => ({ type: curr.name, payload })
+          [capitalize(curr.name)]: (payload: any) => ({ type: curr.name, payload })
         },
         actionMap$: { ...acc.actionMap$, [curr.name]: curr }
       };

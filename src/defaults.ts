@@ -11,7 +11,7 @@ import {
 } from './interfaces';
 import {
   catchErr,
-  flattenObservable,
+  flatCatch,
   createActions,
   mapToObservable,
   isObject
@@ -85,9 +85,9 @@ export function getDefaults<State, ActionsUnion extends IAction>(
 
   const flattenState$ = (source: any) =>
     source.pipe(
-      stateFlatten(flattenObservable),
+      stateFlatten(flatCatch),
       map(mapToObservable),
-      stateFlatten(flattenObservable)
+      stateFlatten(flatCatch)
     );
 
   const bufferSize = (options && options.bufferSize) || 1;

@@ -11,7 +11,7 @@ import {
 import { reducerFactory$ } from './reducer.factory';
 import { StoreConfig, StoreOptions, IAction } from './interfaces';
 import { getDefaults } from './defaults';
-import { mapToObservable, isObject, flattenObservable } from './utils';
+import { mapToObservable, isObject, flatCatch } from './utils';
 
 /**
  * Reactive state container based on RxJS (https://rxjs.dev/)
@@ -72,7 +72,7 @@ export class Store<State, ActionsUnion extends IAction = any> {
         actionStream$.pipe(
           filter(isObject),
           map(mapToObservable),
-          actionFlatten(flattenObservable),
+          actionFlatten(flatCatch),
           tap<ActionsUnion>(this._actions$),
           reducer$,
           map(mapToObservable)

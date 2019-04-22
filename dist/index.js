@@ -205,7 +205,7 @@
       }; });
   };
   var catchErr = rxjs.pipe(operators.catchError(function (e) { return rxjs.of(e); }));
-  var flattenObservable = function (o) { return o.pipe(catchErr); };
+  var flatCatch = function (o) { return o.pipe(catchErr); };
   var mapToObservable = function (value) {
       if (rxjs.isObservable(value))
           return value;
@@ -220,13 +220,14 @@
       }
       return operators.filter(function (action) { return allowedTypes.some(function (type) { return type === action.type; }); });
   }
+  var capitalize = function (str) { return str.replace(/^\w/, function (c) { return c.toUpperCase(); }); };
   var createActions = function (actions) {
       return actions.reduce(function (acc, curr) {
           var _a, _b;
           if (typeof curr !== 'function')
               return acc;
           return {
-              actions: __assign({}, acc.actions, (_a = {}, _a[curr.name + "Action"] = function (payload) { return ({ type: curr.name, payload: payload }); }, _a)),
+              actions: __assign({}, acc.actions, (_a = {}, _a[capitalize(curr.name)] = function (payload) { return ({ type: curr.name, payload: payload }); }, _a)),
               actionMap$: __assign({}, acc.actionMap$, (_b = {}, _b[curr.name] = curr, _b))
           };
       }, { actionMap$: {}, actions: {} });
@@ -271,7 +272,7 @@
       var actionFlatten = fop[(options && options.actionFop) || exports.FlattenOperator.concatMap];
       var stateFlatten = fop[(options && options.stateFop) || exports.FlattenOperator.switchMap];
       var flattenState$ = function (source) {
-          return source.pipe(stateFlatten(flattenObservable), operators.map(mapToObservable), stateFlatten(flattenObservable));
+          return source.pipe(stateFlatten(flatCatch), operators.map(mapToObservable), stateFlatten(flatCatch));
       };
       var bufferSize = (options && options.bufferSize) || 1;
       var windowTime = options && options.windowTime;
@@ -329,7 +330,7 @@
           this._actions$ = new rxjs.Subject();
           var _a = getDefaults(this.config, this.options), actionMap$ = _a.actionMap$, actionStream$ = _a.actionStream$, actionFactory$ = _a.actionFactory$, transducers$ = _a.transducers$, actionFlatten = _a.actionFlatten, initialState$ = _a.initialState$, flattenState$ = _a.flattenState$, destroy$ = _a.destroy$, shareReplayConfig = _a.shareReplayConfig;
           this.state$ = rxjs.combineLatest(actionMap$, transducers$, initialState$).pipe(operators.map(reducerFactory$), operators.concatMap(function (reducer$) {
-              return actionStream$.pipe(operators.filter(isObject), operators.map(mapToObservable), actionFlatten(flattenObservable), operators.tap(_this._actions$), reducer$, operators.map(mapToObservable));
+              return actionStream$.pipe(operators.filter(isObject), operators.map(mapToObservable), actionFlatten(flatCatch), operators.tap(_this._actions$), reducer$, operators.map(mapToObservable));
           }), operators.startWith(initialState$), flattenState$, operators.takeUntil(destroy$), operators.shareReplay(shareReplayConfig));
           this.state$.subscribe();
           this.actionFactory$ = actionFactory$;
