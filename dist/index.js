@@ -413,7 +413,7 @@
       }
       Object.defineProperty(Action.prototype, "type", {
           get: function () {
-              return this.constructor.name.toLowerCase();
+              return this.constructor.name;
           },
           enumerable: true,
           configurable: true
