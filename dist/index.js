@@ -407,13 +407,14 @@
       return reducer(state, reducerFn(state, action));
   }; }; };
 
+  var lowercased = function (str) { return str.replace(/^\w/, function (c) { return c.toLowerCase(); }); };
   var Action = /** @class */ (function () {
       function Action(payload) {
           this.payload = payload;
       }
       Object.defineProperty(Action.prototype, "type", {
           get: function () {
-              return this.constructor.name;
+              return lowercased(this.constructor.name);
           },
           enumerable: true,
           configurable: true
