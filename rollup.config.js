@@ -1,5 +1,4 @@
 import typescript from 'rollup-plugin-typescript2';
-import pkg from './package.json';
 import { terser } from 'rollup-plugin-terser';
 
 export default {
@@ -26,5 +25,5 @@ export default {
       }
     })
   ],
-  external: ['rxjs', 'ts-action']
+  external: ['rxjs']
 };
