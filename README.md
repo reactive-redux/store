@@ -12,8 +12,6 @@
 import { of, Subject, interval } from 'rxjs';
 import { map, take } from 'rxjs/operators';
 import {
-  Action,
-  AsyncType,
   createStore
 } from '@reactive-redux/store';
 

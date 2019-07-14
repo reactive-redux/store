@@ -1,17 +1,16 @@
-import { Observable, combineLatest, Subject } from 'rxjs';
+import { Observable, combineLatest } from 'rxjs';
 import {
   startWith,
   shareReplay,
   takeUntil,
   concatMap,
   map,
-  filter,
   tap
 } from 'rxjs/operators';
 import { reducerFactory$ } from './reducer.factory';
-import { StoreConfig, StoreOptions, IAction } from './interfaces';
+import { StoreConfig, StoreOptions } from './interfaces';
 import { getDefaults } from './defaults';
-import { mapToObservable, isObject, flatCatch } from './utils';
+import { Action } from 'ts-action';
 
 /**
  * Reactive state container based on RxJS (https://rxjs.dev/)
@@ -21,79 +20,62 @@ import { mapToObservable, isObject, flatCatch } from './utils';
  * @type State - application state interface
  * @type ActionsUnion - type union of all the actions
  */
-export class Store<State, ActionsUnion extends IAction = any> {
-  private _actions$ = new Subject<ActionsUnion>();
-
+export class Store<State, ActionsUnion extends Action = any> {
   public state$: Observable<State>;
   public actions$: Observable<ActionsUnion>;
-  public actionFactory$: Observable<{
-    [key: string]: <R, T>(payload?: T) => R;
-  }>;
 
   /**
    * Default configuration
    *
    * @param {Object} config
    *  {
-   *     reducers$: of([]),
+   *     reducer$: of(reducer({})),
    *     actionStream$: EMPTY, // if not defined, no actions will be dispatched in the store
    *     initialState$: of({}),
-   *     transducers$: of({}),
+   *     transducers$: of([]),
    *     destroy$: NEVER // if not defined, the state subscription will live forever
    *  }
    *
    * @param {Object} options
    *  {
-   *     actionFop: FlattenOps.concatMap, // actions are executed in order of propagation
-   *     stateFop: FlattenOps.switchMap // will update to the latest received state, without waiting for previous async operations to finish
-   *     windowTime: undefined
-   *     bufferSize: 1
+   *     actionFop: FlattenOps.concatMap, // Flatten operator for actions's stream.
+   *     stateFop: FlattenOps.switchMap // Flatten operator for state's stream.
+   *     windowTime: undefined //Maximum time length of the replay buffer in milliseconds.
+   *     bufferSize: 1 //Maximum element count of the replay buffer.
    *  }
    */
   constructor(
-    private config?: StoreConfig<State, ActionsUnion>,
+    private config?: StoreConfig<State>,
     private options?: StoreOptions
   ) {
     const {
-      actionMap$,
+      reducer$,
+      actions$,
       actionStream$,
-      actionFactory$,
       transducers$,
-      actionFlatten,
       initialState$,
-      flattenState$,
       destroy$,
+      flattenState$,
       shareReplayConfig
     } = getDefaults<State, ActionsUnion>(this.config, this.options);
 
-    this.state$ = combineLatest(actionMap$, transducers$, initialState$).pipe(
+    this.state$ = combineLatest(initialState$, reducer$, transducers$).pipe(
       map(reducerFactory$),
-      concatMap(reducer$ =>
-        actionStream$.pipe(
-          filter(isObject),
-          map(mapToObservable),
-          actionFlatten(flatCatch),
-          tap<ActionsUnion>(this._actions$),
-          reducer$,
-          map(mapToObservable)
-        )
-      ),
+      concatMap(actionStream$),
       startWith(initialState$),
       flattenState$,
-      takeUntil<State>(destroy$),
+      takeUntil(destroy$),
       shareReplay(shareReplayConfig)
     );
 
     this.state$.subscribe();
 
-    this.actionFactory$ = actionFactory$;
-
-    this.actions$ = this._actions$.asObservable();
+    this.actions$ = actions$.pipe<ActionsUnion>(shareReplay(shareReplayConfig));
   }
 }
 
-export function createStore<State, ActionsUnion extends IAction>(
-  config: StoreConfig<State, ActionsUnion> = {},
+export function createStore<State, ActionsUnion extends Action>(
+  config: StoreConfig<State> = {},
   opts: StoreOptions = {}
 ) {
   return new Store<State, ActionsUnion>(config, opts);

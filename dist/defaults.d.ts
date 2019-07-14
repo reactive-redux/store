@@ -1,16 +1,14 @@
-import { Observable } from 'rxjs';
-import { ActionMap, AsyncType, StoreConfig, StoreOptions, IAction } from './interfaces';
+import { Observable, OperatorFunction, Subject } from 'rxjs';
+import { StoreConfig, StoreOptions } from './interfaces';
 import { ShareReplayConfig } from 'rxjs/internal/operators/shareReplay';
-export declare function getDefaults<State, ActionsUnion extends IAction>(config?: StoreConfig<State, ActionsUnion>, options?: StoreOptions): {
-    actionMap$: Observable<ActionMap<State, ActionsUnion>>;
-    actionStream$: Observable<AsyncType<ActionsUnion>>;
-    actionFactory$: Observable<{
-        [key: string]: (payload?: unknown) => any;
-    }>;
+import { Action } from 'ts-action';
+export declare function getDefaults<State, ActionsUnion extends Action>(config?: StoreConfig<State>, options?: StoreOptions): {
+    reducer$: Observable<any>;
+    actions$: Subject<ActionsUnion>;
+    actionStream$: (reducer: OperatorFunction<any, State>) => Observable<any>;
     initialState$: Observable<State>;
     transducers$: Observable<import("./interfaces").TransducerFn<State, ActionsUnion>[]>;
     destroy$: Observable<boolean>;
-    actionFlatten: any;
-    flattenState$: (source: any) => any;
+    flattenState$: <T>(source: Observable<T>) => Observable<T>;
     shareReplayConfig: ShareReplayConfig;
 };

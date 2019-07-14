@@ -1,21 +1,17 @@
-import { _pipe, isValidAction } from './utils';
-import { Transducers, ActionMap, IAction } from './interfaces';
+import { _pipe } from './utils';
 import { scan } from 'rxjs/operators';
+import { Reducer } from 'ts-action';
 
-export function reducerFactory$<State, ActionsUnion extends IAction>([
-  actionMap,
+export function reducerFactory$<State>([
+  initialState,
+  reducer,
   transducers,
-  initialState
-]: [ActionMap<State, ActionsUnion>, Transducers<State, ActionsUnion>, State]) {
-  function reducer(state: State, action: ActionsUnion): State {
-    if (!isValidAction(action, actionMap)) return state;
-
-    const actionReducer = actionMap[action.type];
-
+]: [State, Reducer<State>, any[]]) {
+  function _reducer(state: State, action: any): State {
     return transducers.length > 0
-      ? _pipe(transducers)(actionReducer)(state, action)
-      : actionReducer(state, action);
+      ? _pipe(transducers)(reducer)(state, action)
+      : reducer(state, action);
   }
 
-  return scan(reducer, initialState);
+  return scan(_reducer, initialState);
 }

@@ -4,8 +4,8 @@
   "description": "Reactive state container",
   "author": "Zdravko Tatarski",
   "license": "MIT",
-  "main": "./dist/index.js",
-  "module": "./dist/index.es.js",
+  "main": "./dist/index.min.js",
+  "module": "./dist/index.js.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
@@ -16,21 +16,25 @@
     "build": "npm run clean:dist && ./node_modules/.bin/rollup -c",
     "push:publish": "git push --follow-tags && npm publish",
     "test": "./node_modules/.bin/jest",
+    "majestic": "./node_modules/.bin/majestic",
     "clean:dist": "rm -rf ./dist"
   },
   "devDependencies": {
-    "@types/jasmine": "2.8.12",
-    "jasmine-ts": "0.2.1",
-    "jest": "23.6.0",
-    "nodemon": "1.18.7",
-    "rollup": "1.1.2",
-    "rollup-plugin-typescript2": "0.19.2",
-    "ts-jest": "23.10.5",
-    "ts-node": "7.0.1",
-    "typescript": "3.3.1"
+    "@types/jasmine": "3.3.13",
+    "jasmine-ts": "0.3.0",
+    "jest": "24.8.0",
+    "majestic": "1.6.0",
+    "nodemon": "1.19.1",
+    "rollup": "1.16.7",
+    "rollup-plugin-typescript2": "0.22.0",
+    "rollup-plugin-terser": "5.1.1",
+    "ts-jest": "24.0.2",
+    "ts-node": "8.3.0",
+    "typescript": "3.5.3"
   },
   "dependencies": {
-    "rxjs": "6.4.0"
+    "rxjs": "6.5.2",
+    "ts-action": "10.1.0"
   },
   "keywords": [
     "rxjs",

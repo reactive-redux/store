@@ -1,18 +1,5 @@
 import { Observable } from 'rxjs';
-
-export interface IAction {
-  type: string;
-  payload?: unknown;
-}
-
-export type ACReturnType<T, A extends IAction> = {
-  actions: { [key: string]: (payload?: unknown) => any };
-  actionMap$: { [key: string]: ReducerFn<T, A> };
-};
-
-export type ActionCreator = <T, A extends IAction>(
-  a: ReducerFn<T, A>[]
-) => ACReturnType<T, A>;
+import { Reducer, Action } from 'ts-action';
 
 export enum FlattenOperator {
   switchMap = 'switchMap',
@@ -21,35 +8,29 @@ export enum FlattenOperator {
   exhaustMap = 'exhaustMap'
 }
 
-export type ConfigActionMap<State, ActionsUnion extends IAction> = Observable<
-  ReducerFn<State, ActionsUnion>[] | ACReturnType<State, ActionsUnion>
->;
-
-export interface StoreConfig<State, ActionsUnion extends IAction> {
-  reducers$?: ConfigActionMap<State, ActionsUnion>;
-  actionStream$?: Observable<ActionsUnion | AsyncType<ActionsUnion>>;
+export interface StoreConfig<State> {
+  reducer$?: Observable<Reducer<State>>;
+  actionStream$?: Observable<any>;
   initialState$?: Observable<State>;
-  transducers$?: Observable<Transducers<State, ActionsUnion>>;
-  destroy$?: Observable<any>;
+  transducers$?: Observable<any[]>;
+  destroy$?: Observable<boolean>;
 }
 
 export interface StoreOptions {
-  actionFop?: FlattenOperator;
-  stateFop?: FlattenOperator;
+  actionFlatOp?: FlattenOperator;
+  stateFlatOp?: FlattenOperator;
   bufferSize?: number;
   windowTime?: number;
 }
 
 export type AsyncType<T> = T | Promise<T> | Observable<T>;
 
-export type ReducerFn<State, A extends IAction> = (state: State, action: A) => State;
+export type IAction = { type: string, payload: any };
 
-export type ActionMap<State, A extends IAction> = {
-  [key: string]: ReducerFn<State, A>;
-};
+export type ReducerFn<State, A extends Action> = (state: State, action: A) => State;
 
-export type TransducerFn<State, A extends IAction> = (
+export type TransducerFn<State, A extends Action> = (
   reducer: ReducerFn<State, A>
 ) => ReducerFn<State, A>;
 
-export type Transducers<T, A extends IAction> = TransducerFn<T, A>[];
+export type Transducers<T, A extends Action> = TransducerFn<T, A>[];

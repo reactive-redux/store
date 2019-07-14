@@ -1,21 +1,12 @@
-import { Observable, of, EMPTY, NEVER } from 'rxjs';
+import { Observable, of, EMPTY, NEVER, OperatorFunction, Subject } from 'rxjs';
 
 import {
-  ActionMap,
-  AsyncType,
   FlattenOperator,
   StoreConfig,
   StoreOptions,
-  Transducers,
-  IAction
+  Transducers
 } from './interfaces';
-import {
-  catchErr,
-  flatCatch,
-  createActions,
-  mapToObservable,
-  isObject
-} from './utils';
+import { catchErr, flatCatch, mapToObservable, isObject } from './utils';
 import {
   switchMap,
   mergeMap,
@@ -23,9 +14,11 @@ import {
   exhaustMap,
   map,
   share,
-  filter
+  filter,
+  tap
 } from 'rxjs/operators';
 import { ShareReplayConfig } from 'rxjs/internal/operators/shareReplay';
+import { reducer, Action } from 'ts-action';
 
 const fop: { [key in FlattenOperator]: any } = {
   switchMap,
@@ -34,39 +27,35 @@ const fop: { [key in FlattenOperator]: any } = {
   exhaustMap
 };
 
-export function getDefaults<State, ActionsUnion extends IAction>(
-  config: StoreConfig<State, ActionsUnion> = {},
+export function getDefaults<State, ActionsUnion extends Action>(
+  config: StoreConfig<State> = {},
   options: StoreOptions = {}
 ) {
-  const createdActions =
-    (config &&
-      config.reducers$ &&
-      config.reducers$.pipe(
-        filter(r => isObject(r) || Array.isArray(r)),
-        map(r => (Array.isArray(r) ? createActions<State, ActionsUnion>(r) : r)),
-        catchErr,
-        share()
-      )) ||
-    of({});
+  const reducer$ =
+    (config && config.reducer$ && config.reducer$.pipe(catchErr)) ||
+    of(reducer<State>({} as State));
 
-  const actionMap$: Observable<ActionMap<State, ActionsUnion>> = createdActions.pipe(
-    filter(a => a.actionMap$),
-    map(a => a.actionMap$)
-  );
+  const actions$ = new Subject<ActionsUnion>();
 
-  const actionFactory$: Observable<{
-    [key: string]: (payload?: unknown) => any;
-  }> = createdActions.pipe(
-    filter(a => a.actions),
-    map(a => a.actions)
-  );
+  const actionStream$: (
+    reducer: OperatorFunction<any, State>
+  ) => Observable<any> = reducer$ =>
+    (
+      (config && config.actionStream$ && config.actionStream$.pipe(catchErr)) ||
+      EMPTY
+    ).pipe(
+      filter(isObject),
+      map(mapToObservable),
+      actionFlatten(flatCatch),
+      tap(actions$),
+      reducer$,
+      map(mapToObservable)
+    );
 
-  const actionStream$: Observable<AsyncType<ActionsUnion>> =
-    (config && config.actionStream$ && config.actionStream$.pipe(catchErr)) || EMPTY;
-
-  const initialState$: Observable<State> =
+  const initialState$: Observable<State> = (
     (config && config.initialState$ && config.initialState$.pipe(catchErr)) ||
-    of({});
+    of({})
+  ).pipe(share());
 
   const transducers$: Observable<Transducers<State, ActionsUnion>> =
     (config &&
@@ -78,13 +67,13 @@ export function getDefaults<State, ActionsUnion extends IAction>(
     (config && config.destroy$ && config.destroy$.pipe(catchErr)) || NEVER;
 
   const actionFlatten: any =
-    fop[(options && options.actionFop) || FlattenOperator.concatMap];
+    fop[(options && options.actionFlatOp) || FlattenOperator.concatMap];
 
   const stateFlatten =
-    fop[(options && options.stateFop) || FlattenOperator.switchMap];
+    fop[(options && options.stateFlatOp) || FlattenOperator.switchMap];
 
-  const flattenState$ = (source: any) =>
-    source.pipe(
+  const flattenState$ = <T>(source: Observable<T>) =>
+    source.pipe<any, any, T>(
       stateFlatten(flatCatch),
       map(mapToObservable),
       stateFlatten(flatCatch)
@@ -100,13 +89,12 @@ export function getDefaults<State, ActionsUnion extends IAction>(
   };
 
   return {
-    actionMap$,
+    reducer$,
+    actions$,
     actionStream$,
-    actionFactory$,
     initialState$,
     transducers$,
     destroy$,
-    actionFlatten,
     flattenState$,
     shareReplayConfig
   };

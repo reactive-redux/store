@@ -1,2 +1,2 @@
-import { Transducers, ActionMap, IAction } from './interfaces';
-export declare function reducerFactory$<State, ActionsUnion extends IAction>([actionMap, transducers, initialState]: [ActionMap<State, ActionsUnion>, Transducers<State, ActionsUnion>, State]): import("rxjs").OperatorFunction<ActionsUnion, State>;
+import { Reducer } from 'ts-action';
+export declare function reducerFactory$<State>([initialState, reducer, transducers,]: [State, Reducer<State>, any[]]): import("rxjs").OperatorFunction<any, State>;
