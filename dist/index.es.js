@@ -1,5 +1,7 @@
-import { pluck, map, distinctUntilChanged, catchError, filter, scan, share, switchMap, mergeMap, concatMap, exhaustMap, tap, startWith, takeUntil, shareReplay } from 'rxjs/operators';
-import { pipe, of, isObservable, from, EMPTY, NEVER, Subject, combineLatest } from 'rxjs';
+import { pluck, map, distinctUntilChanged, catchError, filter, scan, tap, share, switchMap, mergeMap, concatMap, exhaustMap, startWith, takeUntil, shareReplay } from 'rxjs/operators';
+import { pipe, of, isObservable, from, Subject, EMPTY, NEVER, combineLatest } from 'rxjs';
+import { reducer } from 'ts-action';
+export * from 'ts-action';
 
 var FlattenOperator;
 (function (FlattenOperator) {
@@ -23,17 +25,6 @@ MERCHANTABLITY OR NON-INFRINGEMENT.
 See the Apache Version 2.0 License for specific language governing permissions
 and limitations under the License.
 ***************************************************************************** */
-
-var __assign = function() {
-    __assign = Object.assign || function __assign(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 
 function __read(o, n) {
     var m = typeof Symbol === "function" && o[Symbol.iterator];
@@ -187,12 +178,6 @@ function select(pathOrMapFn, propsOrPath) {
 }
 
 var isObject = function (value) { return value !== null && typeof value === 'object'; };
-var hasType = function (action) { return typeof action.type === 'string'; };
-var isValidAction = function (action, map$$1) {
-    return hasType(action) &&
-        map$$1.hasOwnProperty(action.type) &&
-        typeof map$$1[action.type] === 'function';
-};
 var _pipe = function (fns) {
     return fns.reduce(function (f, g) { return function () {
         var args = [];
@@ -218,30 +203,15 @@ function ofType() {
     }
     return filter(function (action) { return allowedTypes.some(function (type) { return type === action.type; }); });
 }
-var capitalize = function (str) { return str.replace(/^\w/, function (c) { return c.toUpperCase(); }); };
-var createActions = function (actions) {
-    return actions.reduce(function (acc, curr) {
-        var _a, _b;
-        if (typeof curr !== 'function')
-            return acc;
-        return {
-            actions: __assign({}, acc.actions, (_a = {}, _a[capitalize(curr.name)] = function (payload) { return ({ type: curr.name, payload: payload }); }, _a)),
-            actionMap$: __assign({}, acc.actionMap$, (_b = {}, _b[curr.name] = curr, _b))
-        };
-    }, { actionMap$: {}, actions: {} });
-};
 
 function reducerFactory$(_a) {
-    var _b = __read(_a, 3), actionMap = _b[0], transducers = _b[1], initialState = _b[2];
-    function reducer(state, action) {
-        if (!isValidAction(action, actionMap))
-            return state;
-        var actionReducer = actionMap[action.type];
+    var _b = __read(_a, 3), initialState = _b[0], reducer = _b[1], transducers = _b[2];
+    function _reducer(state, action) {
         return transducers.length > 0
-            ? _pipe(transducers)(actionReducer)(state, action)
-            : actionReducer(state, action);
+            ? _pipe(transducers)(reducer)(state, action)
+            : reducer(state, action);
     }
-    return scan(reducer, initialState);
+    return scan(_reducer, initialState);
 }
 
 var fop = {
@@ -253,22 +223,22 @@ var fop = {
 function getDefaults(config, options) {
     if (config === void 0) { config = {}; }
     if (options === void 0) { options = {}; }
-    var createdActions = (config &&
-        config.reducers$ &&
-        config.reducers$.pipe(filter(function (r) { return isObject(r) || Array.isArray(r); }), map(function (r) { return (Array.isArray(r) ? createActions(r) : r); }), catchErr, share())) ||
-        of({});
-    var actionMap$ = createdActions.pipe(filter(function (a) { return a.actionMap$; }), map(function (a) { return a.actionMap$; }));
-    var actionFactory$ = createdActions.pipe(filter(function (a) { return a.actions; }), map(function (a) { return a.actions; }));
-    var actionStream$ = (config && config.actionStream$ && config.actionStream$.pipe(catchErr)) || EMPTY;
-    var initialState$ = (config && config.initialState$ && config.initialState$.pipe(catchErr)) ||
-        of({});
+    var reducer$ = (config && config.reducer$ && config.reducer$.pipe(catchErr)) ||
+        of(reducer({}));
+    var actions$ = new Subject();
+    var actionStream$ = function (reducer$) {
+        return ((config && config.actionStream$ && config.actionStream$.pipe(catchErr)) ||
+            EMPTY).pipe(filter(isObject), map(mapToObservable), actionFlatten(flatCatch), tap(actions$), reducer$, map(mapToObservable));
+    };
+    var initialState$ = ((config && config.initialState$ && config.initialState$.pipe(catchErr)) ||
+        of({})).pipe(share());
     var transducers$ = (config &&
         config.transducers$ &&
         config.transducers$.pipe(catchErr)) ||
         of([]);
     var destroy$ = (config && config.destroy$ && config.destroy$.pipe(catchErr)) || NEVER;
-    var actionFlatten = fop[(options && options.actionFop) || FlattenOperator.concatMap];
-    var stateFlatten = fop[(options && options.stateFop) || FlattenOperator.switchMap];
+    var actionFlatten = fop[(options && options.actionFlatOp) || FlattenOperator.concatMap];
+    var stateFlatten = fop[(options && options.stateFlatOp) || FlattenOperator.switchMap];
     var flattenState$ = function (source) {
         return source.pipe(stateFlatten(flatCatch), map(mapToObservable), stateFlatten(flatCatch));
     };
@@ -280,13 +250,12 @@ function getDefaults(config, options) {
         windowTime: windowTime
     };
     return {
-        actionMap$: actionMap$,
+        reducer$: reducer$,
+        actions$: actions$,
         actionStream$: actionStream$,
-        actionFactory$: actionFactory$,
         initialState$: initialState$,
         transducers$: transducers$,
         destroy$: destroy$,
-        actionFlatten: actionFlatten,
         flattenState$: flattenState$,
         shareReplayConfig: shareReplayConfig
     };
@@ -306,41 +275,31 @@ var Store = /** @class */ (function () {
      *
      * @param {Object} config
      *  {
-     *     reducers$: of([]),
+     *     reducer$: of(reducer({})),
      *     actionStream$: EMPTY, // if not defined, no actions will be dispatched in the store
      *     initialState$: of({}),
-     *     transducers$: of({}),
+     *     transducers$: of([]),
      *     destroy$: NEVER // if not defined, the state subscription will live forever
      *  }
      *
      * @param {Object} options
      *  {
-     *     actionFop: FlattenOps.concatMap, // actions are executed in order of propagation
-     *     stateFop: FlattenOps.switchMap // will update to the latest received state, without waiting for previous async operations to finish
-     *     windowTime: undefined
-     *     bufferSize: 1
+     *     actionFop: FlattenOps.concatMap, // Flatten operator for actions's stream.
+     *     stateFop: FlattenOps.switchMap // Flatten operator for state's stream.
+     *     windowTime: undefined //Maximum time length of the replay buffer in milliseconds.
+     *     bufferSize: 1 //Maximum element count of the replay buffer.
      *  }
      */
     function Store(config, options) {
-        var _this = this;
         this.config = config;
         this.options = options;
-        this._actions$ = new Subject();
-        var _a = getDefaults(this.config, this.options), actionMap$ = _a.actionMap$, actionStream$ = _a.actionStream$, actionFactory$ = _a.actionFactory$, transducers$ = _a.transducers$, actionFlatten = _a.actionFlatten, initialState$ = _a.initialState$, flattenState$ = _a.flattenState$, destroy$ = _a.destroy$, shareReplayConfig = _a.shareReplayConfig;
-        this.state$ = combineLatest(actionMap$, transducers$, initialState$).pipe(map(reducerFactory$), concatMap(function (reducer$) {
-            return actionStream$.pipe(filter(isObject), map(mapToObservable), actionFlatten(flatCatch), tap(_this._actions$), reducer$, map(mapToObservable));
-        }), startWith(initialState$), flattenState$, takeUntil(destroy$), shareReplay(shareReplayConfig));
+        var _a = getDefaults(this.config, this.options), reducer$ = _a.reducer$, actions$ = _a.actions$, actionStream$ = _a.actionStream$, transducers$ = _a.transducers$, initialState$ = _a.initialState$, destroy$ = _a.destroy$, flattenState$ = _a.flattenState$, shareReplayConfig = _a.shareReplayConfig;
+        this.state$ = combineLatest(initialState$, reducer$, transducers$).pipe(map(reducerFactory$), concatMap(actionStream$), startWith(initialState$), flattenState$, takeUntil(destroy$), shareReplay(shareReplayConfig));
         this.state$.subscribe();
-        this.actionFactory$ = actionFactory$;
-        this.actions$ = this._actions$.asObservable();
+        this.actions$ = actions$.pipe(shareReplay(shareReplayConfig));
     }
     return Store;
 }());
-function createStore(config, opts) {
-    if (config === void 0) { config = {}; }
-    if (opts === void 0) { opts = {}; }
-    return new Store(config, opts);
-}
 
 /**
  *
@@ -405,19 +364,4 @@ var reduceA = function (reducerFn) { return function (reducer) { return function
     return reducer(state, reducerFn(state, action));
 }; }; };
 
-var lowercased = function (str) { return str.replace(/^\w/, function (c) { return c.toLowerCase(); }); };
-var Action = /** @class */ (function () {
-    function Action(payload) {
-        this.payload = payload;
-    }
-    Object.defineProperty(Action.prototype, "type", {
-        get: function () {
-            return lowercased(this.constructor.name);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    return Action;
-}());
-
-export { FlattenOperator, createSelector, select, Store, createStore, mapToObservable, ofType, catchErr, createActions, Action, mapPS, mapNS, mapA, filterPS, filterNS, filterA, reducePS, reduceNS, reduceA };
+export { FlattenOperator, Store, catchErr, createSelector, filterA, filterNS, filterPS, mapA, mapNS, mapPS, mapToObservable, ofType, reduceA, reduceNS, reducePS, select };
