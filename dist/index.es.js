@@ -1,4 +1,4 @@
-import { pluck, map, distinctUntilChanged, catchError, filter, scan, tap, share, switchMap, mergeMap, concatMap, exhaustMap, startWith, takeUntil, shareReplay } from 'rxjs/operators';
+import { pluck, map, distinctUntilChanged, catchError, scan, filter, tap, share, switchMap, mergeMap, concatMap, exhaustMap, startWith, takeUntil, shareReplay } from 'rxjs/operators';
 import { pipe, of, isObservable, from, Subject, EMPTY, NEVER, combineLatest } from 'rxjs';
 import { reducer } from 'ts-action';
 export * from 'ts-action';
@@ -196,13 +196,6 @@ var mapToObservable = function (value) {
         return from(value);
     return of(value);
 };
-function ofType() {
-    var allowedTypes = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        allowedTypes[_i] = arguments[_i];
-    }
-    return filter(function (action) { return allowedTypes.some(function (type) { return type === action.type; }); });
-}
 
 function reducerFactory$(_a) {
     var _b = __read(_a, 3), initialState = _b[0], reducer = _b[1], transducers = _b[2];
@@ -364,4 +357,4 @@ var reduceA = function (reducerFn) { return function (reducer) { return function
     return reducer(state, reducerFn(state, action));
 }; }; };
 
-export { FlattenOperator, Store, catchErr, createSelector, filterA, filterNS, filterPS, mapA, mapNS, mapPS, mapToObservable, ofType, reduceA, reduceNS, reducePS, select };
+export { FlattenOperator, Store, catchErr, createSelector, filterA, filterNS, filterPS, mapA, mapNS, mapPS, mapToObservable, reduceA, reduceNS, reducePS, select };
