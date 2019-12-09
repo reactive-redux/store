@@ -1,4 +1,4 @@
-import { Store, ofType } from '../src/index';
+import { Store } from '../src/index';
 import {
   MockState,
   mockInitValue,
