@@ -4,7 +4,7 @@ import {
   FlattenOperator,
   StoreConfig,
   StoreOptions,
-  middleware
+  Middleware
 } from './interfaces';
 import { catchErr, flatCatch, mapToObservable, isObject } from './utils';
 import {
@@ -18,7 +18,7 @@ import {
   tap
 } from 'rxjs/operators';
 import { ShareReplayConfig } from 'rxjs/internal/operators/shareReplay';
-import { reducer, Action } from 'ts-action';
+import { reducer, Action, Reducer } from 'ts-action';
 
 const fop: { [key in FlattenOperator]: any } = {
   switchMap,
@@ -28,12 +28,12 @@ const fop: { [key in FlattenOperator]: any } = {
 };
 
 export function getDefaults<State, ActionsUnion extends Action>(
-  config: StoreConfig<State> = {},
+  config: StoreConfig<State, ActionsUnion> = {},
   options: StoreOptions = {}
 ) {
   const reducer$ =
-    (config && config.reducer$ && config.reducer$.pipe(catchErr)) ||
-    of(reducer<State>({} as State));
+    (config && config.reducer$ && config.reducer$.pipe<Reducer<State>>(catchErr)) ||
+    of<Reducer<State>>(reducer<State>({} as State));
 
   const actions$ = new Subject<ActionsUnion>();
 
@@ -57,11 +57,11 @@ export function getDefaults<State, ActionsUnion extends Action>(
     of({})
   ).pipe(share());
 
-  const middleware$: Observable<middleware<State, ActionsUnion>> =
+  const middleware$: Observable<Middleware<State, ActionsUnion>> =
     (config &&
       config.middleware$ &&
-      config.middleware$.pipe<middleware<State, ActionsUnion>>(catchErr)) ||
-    of([]);
+      config.middleware$.pipe<Middleware<State, ActionsUnion>>(catchErr)) ||
+    of<Middleware<State, ActionsUnion>>([]);
 
   const destroy$: Observable<boolean> =
     (config && config.destroy$ && config.destroy$.pipe(catchErr)) || NEVER;

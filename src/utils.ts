@@ -9,8 +9,7 @@ export const isObject = (value: any) => value !== null && typeof value === 'obje
 
 export const hasType = (action: any) => typeof action.type === 'string';
 
-export const _pipe = (fns: any[]) =>
-  fns.reduce((f, g) => (...args: any[]) => f(g(...args)));
+export const compose = (fns: any[]) => fns.reduce((f, g) => (...args: any[]) => f(g(...args)));
 
 export const catchErr = pipe(catchError(e => of(e)));
 

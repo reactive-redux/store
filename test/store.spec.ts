@@ -1,7 +1,7 @@
 import { Store } from '../src/index';
 import {
   MockState,
-  mockInitValue,
+  MockInitValue,
 } from './mock';
 import { take } from 'rxjs/operators';
 import { createStore } from '../src/store';

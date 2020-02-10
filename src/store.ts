@@ -20,7 +20,7 @@ import { Action } from 'ts-action';
  * @type State - application state interface
  * @type ActionsUnion - type union of all the actions
  */
-export class Store<State, ActionsUnion extends Action = any> {
+export class Store<State, ActionsUnion extends Action<any> = any> {
   public state$: Observable<State>;
   public actions$: Observable<ActionsUnion>;
 
@@ -45,7 +45,7 @@ export class Store<State, ActionsUnion extends Action = any> {
    *  }
    */
   constructor(
-    private config?: StoreConfig<State>,
+    private config?: StoreConfig<State, ActionsUnion>,
     private options?: StoreOptions
   ) {
     const {
@@ -75,7 +75,7 @@ export class Store<State, ActionsUnion extends Action = any> {
 }
 
 export function createStore<State, ActionsUnion extends Action>(
-  config: StoreConfig<State> = {},
+  config: StoreConfig<State, ActionsUnion> = {},
   opts: StoreOptions = {}
 ) {
   return new Store<State, ActionsUnion>(config, opts);

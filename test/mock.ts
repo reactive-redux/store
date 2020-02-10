@@ -17,7 +17,7 @@ export enum MockActionsEnum {
 
 export const add = action(MockActionsEnum.ADD, fsa<{ number: number }>());
 export const remove = action(MockActionsEnum.REMOVE, fsa<{ number: number }>());
-export const ActionUnion = union(add, remove);
+export const MockActionUnion = union(add, remove);
 
 const compare: (x: number) => (y: number) => boolean = x => y => x === y;
 
