@@ -30,12 +30,12 @@
     "rollup-plugin-terser": "5.2.0",
     "rollup-plugin-typescript2": "0.22.0",
     "ts-jest": "24.0.2",
-    "ts-node": "8.3.0",
-    "typescript": "3.5.3"
+    "ts-node": "^8.6.2",
+    "typescript": "^3.7.5"
   },
   "dependencies": {
-    "rxjs": "6.5.2",
-    "ts-action": "10.1.0"
+    "rxjs": "^6.5.4",
+    "ts-action": "^11.0.0"
   },
   "keywords": [
     "rxjs",
