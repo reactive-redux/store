@@ -5,7 +5,7 @@
   "author": "Zdravko Tatarski",
   "license": "MIT",
   "main": "./dist/index.min.js",
-  "module": "./dist/index.js.js",
+  "module": "./dist/index.es.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
