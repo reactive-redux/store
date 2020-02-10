@@ -6,12 +6,12 @@ export declare enum FlattenOperator {
     concatMap = "concatMap",
     exhaustMap = "exhaustMap"
 }
-export interface StoreConfig<State> {
+export interface StoreConfig<State, ActionUnion extends Action> {
     reducer$?: Observable<Reducer<State>>;
-    actionStream$?: Observable<any>;
+    actionStream$?: Observable<ActionUnion>;
     initialState$?: Observable<State>;
-    middleware$?: Observable<any[]>;
-    destroy$?: Observable<boolean>;
+    middleware$?: Observable<Middleware<State, ActionUnion>>;
+    destroy$?: Observable<any>;
 }
 export interface StoreOptions {
     actionFlatOp?: FlattenOperator;
@@ -26,4 +26,4 @@ export declare type IAction = {
 };
 export declare type ReducerFn<State, A extends Action> = (state: State, action: A) => State;
 export declare type MiddlewareFn<State, A extends Action> = (reducer: ReducerFn<State, A>) => ReducerFn<State, A>;
-export declare type middleware<T, A extends Action> = MiddlewareFn<T, A>[];
+export declare type Middleware<T, A extends Action> = MiddlewareFn<T, A>[];

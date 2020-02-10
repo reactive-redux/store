@@ -178,15 +178,13 @@ function select(pathOrMapFn, propsOrPath) {
 }
 
 var isObject = function (value) { return value !== null && typeof value === 'object'; };
-var _pipe = function (fns) {
-    return fns.reduce(function (f, g) { return function () {
-        var args = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
-        }
-        return f(g.apply(void 0, __spread(args)));
-    }; });
-};
+var compose = function (fns) { return fns.reduce(function (f, g) { return function () {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
+    }
+    return f(g.apply(void 0, __spread(args)));
+}; }); };
 var catchErr = pipe(catchError(function (e) { return of(e); }));
 var flatCatch = function (o) { return o.pipe(catchErr); };
 var mapToObservable = function (value) {
@@ -201,7 +199,7 @@ function reducerFactory$(_a) {
     var _b = __read(_a, 3), initialState = _b[0], reducer = _b[1], middleware = _b[2];
     function _reducer(state, action) {
         return middleware.length > 0
-            ? _pipe(middleware)(reducer)(state, action)
+            ? compose(middleware)(reducer)(state, action)
             : reducer(state, action);
     }
     return scan(_reducer, initialState);
