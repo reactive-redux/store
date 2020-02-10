@@ -7,7 +7,7 @@ export declare function getDefaults<State, ActionsUnion extends Action>(config?:
     actions$: Subject<ActionsUnion>;
     actionStream$: (reducer: OperatorFunction<any, State>) => Observable<any>;
     initialState$: Observable<State>;
-    transducers$: Observable<import("./interfaces").TransducerFn<State, ActionsUnion>[]>;
+    middleware$: Observable<import("./interfaces").MiddlewareFn<State, ActionsUnion>[]>;
     destroy$: Observable<boolean>;
     flattenState$: <T>(source: Observable<T>) => Observable<T>;
     shareReplayConfig: ShareReplayConfig;

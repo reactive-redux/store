@@ -10,7 +10,7 @@ export interface StoreConfig<State> {
     reducer$?: Observable<Reducer<State>>;
     actionStream$?: Observable<any>;
     initialState$?: Observable<State>;
-    transducers$?: Observable<any[]>;
+    middleware$?: Observable<any[]>;
     destroy$?: Observable<boolean>;
 }
 export interface StoreOptions {
@@ -25,5 +25,5 @@ export declare type IAction = {
     payload: any;
 };
 export declare type ReducerFn<State, A extends Action> = (state: State, action: A) => State;
-export declare type TransducerFn<State, A extends Action> = (reducer: ReducerFn<State, A>) => ReducerFn<State, A>;
-export declare type Transducers<T, A extends Action> = TransducerFn<T, A>[];
+export declare type MiddlewareFn<State, A extends Action> = (reducer: ReducerFn<State, A>) => ReducerFn<State, A>;
+export declare type middleware<T, A extends Action> = MiddlewareFn<T, A>[];

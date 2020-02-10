@@ -198,10 +198,10 @@ var mapToObservable = function (value) {
 };
 
 function reducerFactory$(_a) {
-    var _b = __read(_a, 3), initialState = _b[0], reducer = _b[1], transducers = _b[2];
+    var _b = __read(_a, 3), initialState = _b[0], reducer = _b[1], middleware = _b[2];
     function _reducer(state, action) {
-        return transducers.length > 0
-            ? _pipe(transducers)(reducer)(state, action)
+        return middleware.length > 0
+            ? _pipe(middleware)(reducer)(state, action)
             : reducer(state, action);
     }
     return scan(_reducer, initialState);
@@ -225,9 +225,9 @@ function getDefaults(config, options) {
     };
     var initialState$ = ((config && config.initialState$ && config.initialState$.pipe(catchErr)) ||
         of({})).pipe(share());
-    var transducers$ = (config &&
-        config.transducers$ &&
-        config.transducers$.pipe(catchErr)) ||
+    var middleware$ = (config &&
+        config.middleware$ &&
+        config.middleware$.pipe(catchErr)) ||
         of([]);
     var destroy$ = (config && config.destroy$ && config.destroy$.pipe(catchErr)) || NEVER;
     var actionFlatten = fop[(options && options.actionFlatOp) || FlattenOperator.concatMap];
@@ -247,7 +247,7 @@ function getDefaults(config, options) {
         actions$: actions$,
         actionStream$: actionStream$,
         initialState$: initialState$,
-        transducers$: transducers$,
+        middleware$: middleware$,
         destroy$: destroy$,
         flattenState$: flattenState$,
         shareReplayConfig: shareReplayConfig
@@ -271,7 +271,7 @@ var Store = /** @class */ (function () {
      *     reducer$: of(reducer({})),
      *     actionStream$: EMPTY, // if not defined, no actions will be dispatched in the store
      *     initialState$: of({}),
-     *     transducers$: of([]),
+     *     middleware$: of([]),
      *     destroy$: NEVER // if not defined, the state subscription will live forever
      *  }
      *
@@ -286,8 +286,8 @@ var Store = /** @class */ (function () {
     function Store(config, options) {
         this.config = config;
         this.options = options;
-        var _a = getDefaults(this.config, this.options), reducer$ = _a.reducer$, actions$ = _a.actions$, actionStream$ = _a.actionStream$, transducers$ = _a.transducers$, initialState$ = _a.initialState$, destroy$ = _a.destroy$, flattenState$ = _a.flattenState$, shareReplayConfig = _a.shareReplayConfig;
-        this.state$ = combineLatest(initialState$, reducer$, transducers$).pipe(map(reducerFactory$), concatMap(actionStream$), startWith(initialState$), flattenState$, takeUntil(destroy$), shareReplay(shareReplayConfig));
+        var _a = getDefaults(this.config, this.options), reducer$ = _a.reducer$, actions$ = _a.actions$, actionStream$ = _a.actionStream$, middleware$ = _a.middleware$, initialState$ = _a.initialState$, destroy$ = _a.destroy$, flattenState$ = _a.flattenState$, shareReplayConfig = _a.shareReplayConfig;
+        this.state$ = combineLatest(initialState$, reducer$, middleware$).pipe(map(reducerFactory$), concatMap(actionStream$), startWith(initialState$), flattenState$, takeUntil(destroy$), shareReplay(shareReplayConfig));
         this.state$.subscribe();
         this.actions$ = actions$.pipe(shareReplay(shareReplayConfig));
     }
@@ -297,7 +297,7 @@ var Store = /** @class */ (function () {
 /**
  *
  * @param mapFn - a function to map a state with
- * @returns {TransducerFn} TransducerFn<State>
+ * @returns {MiddlewareFn} MiddlewareFn<State>
  *
  * PS - previous state
  * NS - next state
@@ -307,13 +307,13 @@ var mapNS = function (mapFn) { return function (reducer) { return function (stat
 /**
  *
  * @param mapFn - a function to map an action with
- * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
+ * @returns {MiddlewareFn} MiddlewareFn<State, ActionsUnion>
  */
 var mapA = function (mapFn) { return function (reducer) { return function (state, action) { return reducer(state, mapFn(action)); }; }; };
 /**
  *
  * @param filterFn - a function to filter a state with
- * @returns {TransducerFn} TransducerFn<State>
+ * @returns {MiddlewareFn} MiddlewareFn<State>
  *
  * PS - previous state
  * NS - next state
@@ -328,7 +328,7 @@ var filterNS = function (filterFn) { return function (reducer) { return function
 /**
  *
  * @param filterFn - a function to filter an action with
- * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
+ * @returns {MiddlewareFn} MiddlewareFn<State, ActionsUnion>
  */
 var filterA = function (filterFn) { return function (reducer) { return function (state, action) {
     return filterFn(action) ? reducer(state, action) : state;
@@ -336,7 +336,7 @@ var filterA = function (filterFn) { return function (reducer) { return function 
 /**
  * Reduce into state
  * @param reduceFn - a function to reduce the state and action together
- * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
+ * @returns {MiddlewareFn} MiddlewareFn<State, ActionsUnion>
  *
  * PS - previous state
  * NS - next state
@@ -351,7 +351,7 @@ var reduceNS = function (reducerFn) { return function (reducer) { return functio
  *
  * Reduce into action
  * @param reduceFn - a function to reduce the state and action together
- * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
+ * @returns {MiddlewareFn} MiddlewareFn<State, ActionsUnion>
  */
 var reduceA = function (reducerFn) { return function (reducer) { return function (state, action) {
     return reducer(state, reducerFn(state, action));

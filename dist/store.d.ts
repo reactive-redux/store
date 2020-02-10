@@ -22,7 +22,7 @@ export declare class Store<State, ActionsUnion extends Action = any> {
      *     reducer$: of(reducer({})),
      *     actionStream$: EMPTY, // if not defined, no actions will be dispatched in the store
      *     initialState$: of({}),
-     *     transducers$: of([]),
+     *     middleware$: of([]),
      *     destroy$: NEVER // if not defined, the state subscription will live forever
      *  }
      *
