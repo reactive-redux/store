@@ -16,6 +16,7 @@
     "build": "npm run clean:dist && ./node_modules/.bin/rollup -c",
     "push:publish": "git push --follow-tags && npm publish",
     "test": "./node_modules/.bin/jest",
+    "test:watch": "./node_modules/.bin/jest --watch",
     "majestic": "./node_modules/.bin/majestic",
     "clean:dist": "rm -rf ./dist"
   },
@@ -26,8 +27,8 @@
     "majestic": "1.6.0",
     "nodemon": "1.19.1",
     "rollup": "1.16.7",
+    "rollup-plugin-terser": "5.2.0",
     "rollup-plugin-typescript2": "0.22.0",
-    "rollup-plugin-terser": "5.1.1",
     "ts-jest": "24.0.2",
     "ts-node": "8.3.0",
     "typescript": "3.5.3"
