@@ -5,11 +5,11 @@ import { Reducer } from 'ts-action';
 export function reducerFactory$<State>([
   initialState,
   reducer,
-  transducers,
+  middleware,
 ]: [State, Reducer<State>, any[]]) {
   function _reducer(state: State, action: any): State {
-    return transducers.length > 0
-      ? _pipe(transducers)(reducer)(state, action)
+    return middleware.length > 0
+      ? _pipe(middleware)(reducer)(state, action)
       : reducer(state, action);
   }
 

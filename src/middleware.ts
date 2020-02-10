@@ -1,10 +1,10 @@
-import { ReducerFn, TransducerFn } from './interfaces';
+import { ReducerFn, MiddlewareFn } from './interfaces';
 import { Action } from 'ts-action';
 
 /**
  *
  * @param mapFn - a function to map a state with
- * @returns {TransducerFn} TransducerFn<State>
+ * @returns {MiddlewareFn} MiddlewareFn<State>
  *
  * PS - previous state
  * NS - next state
@@ -20,7 +20,7 @@ export const mapNS = <State, A extends Action>(mapFn: (state: State) => State) =
 /**
  *
  * @param mapFn - a function to map an action with
- * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
+ * @returns {MiddlewareFn} MiddlewareFn<State, ActionsUnion>
  */
 export const mapA = <State, A extends Action>(mapFn: (action: A) => A) => (
   reducer: ReducerFn<State, A>
@@ -29,7 +29,7 @@ export const mapA = <State, A extends Action>(mapFn: (action: A) => A) => (
 /**
  *
  * @param filterFn - a function to filter a state with
- * @returns {TransducerFn} TransducerFn<State>
+ * @returns {MiddlewareFn} MiddlewareFn<State>
  *
  * PS - previous state
  * NS - next state
@@ -50,7 +50,7 @@ export const filterNS = <State, A extends Action>(filterFn: (state: State) => bo
 /**
  *
  * @param filterFn - a function to filter an action with
- * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
+ * @returns {MiddlewareFn} MiddlewareFn<State, ActionsUnion>
  */
 export const filterA = <State, A extends Action>(
   filterFn: (action: A) => boolean
@@ -61,7 +61,7 @@ export const filterA = <State, A extends Action>(
 /**
  * Reduce into state
  * @param reduceFn - a function to reduce the state and action together
- * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
+ * @returns {MiddlewareFn} MiddlewareFn<State, ActionsUnion>
  *
  * PS - previous state
  * NS - next state
@@ -82,7 +82,7 @@ export const reduceNS = <State, A extends Action>(
  *
  * Reduce into action
  * @param reduceFn - a function to reduce the state and action together
- * @returns {TransducerFn} TransducerFn<State, ActionsUnion>
+ * @returns {MiddlewareFn} MiddlewareFn<State, ActionsUnion>
  */
 export const reduceA = <State, A extends Action>(
   reducerFn: (state: State, action: A) => A

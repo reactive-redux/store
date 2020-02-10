@@ -4,7 +4,7 @@ import {
   FlattenOperator,
   StoreConfig,
   StoreOptions,
-  Transducers
+  middleware
 } from './interfaces';
 import { catchErr, flatCatch, mapToObservable, isObject } from './utils';
 import {
@@ -57,10 +57,10 @@ export function getDefaults<State, ActionsUnion extends Action>(
     of({})
   ).pipe(share());
 
-  const transducers$: Observable<Transducers<State, ActionsUnion>> =
+  const middleware$: Observable<middleware<State, ActionsUnion>> =
     (config &&
-      config.transducers$ &&
-      config.transducers$.pipe<Transducers<State, ActionsUnion>>(catchErr)) ||
+      config.middleware$ &&
+      config.middleware$.pipe<middleware<State, ActionsUnion>>(catchErr)) ||
     of([]);
 
   const destroy$: Observable<boolean> =
@@ -93,7 +93,7 @@ export function getDefaults<State, ActionsUnion extends Action>(
     actions$,
     actionStream$,
     initialState$,
-    transducers$,
+    middleware$,
     destroy$,
     flattenState$,
     shareReplayConfig

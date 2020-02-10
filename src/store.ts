@@ -32,7 +32,7 @@ export class Store<State, ActionsUnion extends Action = any> {
    *     reducer$: of(reducer({})),
    *     actionStream$: EMPTY, // if not defined, no actions will be dispatched in the store
    *     initialState$: of({}),
-   *     transducers$: of([]),
+   *     middleware$: of([]),
    *     destroy$: NEVER // if not defined, the state subscription will live forever
    *  }
    *
@@ -52,14 +52,14 @@ export class Store<State, ActionsUnion extends Action = any> {
       reducer$,
       actions$,
       actionStream$,
-      transducers$,
+      middleware$,
       initialState$,
       destroy$,
       flattenState$,
       shareReplayConfig
     } = getDefaults<State, ActionsUnion>(this.config, this.options);
 
-    this.state$ = combineLatest(initialState$, reducer$, transducers$).pipe(
+    this.state$ = combineLatest(initialState$, reducer$, middleware$).pipe(
       map(reducerFactory$),
       concatMap(actionStream$),
       startWith(initialState$),
