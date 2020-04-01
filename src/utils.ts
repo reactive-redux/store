@@ -28,6 +28,3 @@ export function ofType<T extends IAction>(
     (action: IAction): action is T => allowedTypes.some(type => type === action.type)
   );
 }
-
-export const lowercaze = (str: string) => str.replace(/^\w/, c => c.toLowerCase());
-export const capitalize = (str: string) => str.replace(/^\w/, c => c.toUpperCase());
