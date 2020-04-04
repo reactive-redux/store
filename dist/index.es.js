@@ -12,55 +12,11 @@ var FlattenOperator;
     FlattenOperator["exhaustMap"] = "exhaustMap";
 })(FlattenOperator || (FlattenOperator = {}));
 
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation. All rights reserved.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-this file except in compliance with the License. You may obtain a copy of the
-License at http://www.apache.org/licenses/LICENSE-2.0
-
-THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-MERCHANTABLITY OR NON-INFRINGEMENT.
-
-See the Apache Version 2.0 License for specific language governing permissions
-and limitations under the License.
-***************************************************************************** */
-
-function __read(o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
-    try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-    }
-    catch (error) { e = { error: error }; }
-    finally {
-        try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
-        }
-        finally { if (e) throw e.error; }
-    }
-    return ar;
-}
-
-function __spread() {
-    for (var ar = [], i = 0; i < arguments.length; i++)
-        ar = ar.concat(__read(arguments[i]));
-    return ar;
-}
-
-var isObject = function (value) { return value !== null && typeof value === 'object'; };
-var compose = function (fns) { return fns.reduce(function (f, g) { return function () {
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        args[_i] = arguments[_i];
-    }
-    return f(g.apply(void 0, __spread(args)));
-}; }); };
-var catchErr = pipe(catchError(function (e) { return of(e); }));
-var flatCatch = function (o) { return o.pipe(catchErr); };
-var mapToObservable = function (value) {
+const isObject = (value) => value !== null && typeof value === 'object';
+const compose = (fns) => fns.reduce((f, g) => (...args) => f(g(...args)));
+const catchErr = pipe(catchError(e => of(e)));
+const flatCatch = (o) => o.pipe(catchErr);
+const mapToObservable = (value) => {
     if (isObservable(value))
         return value;
     if (value instanceof Promise)
@@ -68,8 +24,7 @@ var mapToObservable = function (value) {
     return of(value);
 };
 
-function reducerFactory$(_a) {
-    var _b = __read(_a, 3), initialState = _b[0], reducer = _b[1], middleware = _b[2];
+function reducerFactory$([initialState, reducer, middleware,]) {
     function _reducer(state, action) {
         return middleware.length > 0
             ? compose(middleware)(reducer)(state, action)
@@ -78,50 +33,44 @@ function reducerFactory$(_a) {
     return scan(_reducer, initialState);
 }
 
-var fop = {
-    switchMap: switchMap,
-    mergeMap: mergeMap,
-    concatMap: concatMap,
-    exhaustMap: exhaustMap
+const fop = {
+    switchMap,
+    mergeMap,
+    concatMap,
+    exhaustMap
 };
-function getDefaults(config, options) {
-    if (config === void 0) { config = {}; }
-    if (options === void 0) { options = {}; }
-    var reducer$ = (config && config.reducer$ && config.reducer$.pipe(catchErr)) ||
+function getDefaults(config = {}, options = {}) {
+    const reducer$ = (config && config.reducer$ && config.reducer$.pipe(catchErr)) ||
         of(reducer({}));
-    var actions$ = new Subject();
-    var actionStream$ = function (reducer$) {
-        return ((config && config.actionStream$ && config.actionStream$.pipe(catchErr)) ||
-            EMPTY).pipe(filter(isObject), map(mapToObservable), actionFlatten(flatCatch), tap(actions$), reducer$, map(mapToObservable));
-    };
-    var initialState$ = ((config && config.initialState$ && config.initialState$.pipe(catchErr)) ||
+    const actions$ = new Subject();
+    const actionStream$ = reducer$ => ((config && config.actionStream$ && config.actionStream$.pipe(catchErr)) ||
+        EMPTY).pipe(filter(isObject), map(mapToObservable), actionFlatten(flatCatch), tap(actions$), reducer$, map(mapToObservable));
+    const initialState$ = ((config && config.initialState$ && config.initialState$.pipe(catchErr)) ||
         of({})).pipe(share());
-    var middleware$ = (config &&
+    const middleware$ = (config &&
         config.middleware$ &&
         config.middleware$.pipe(catchErr)) ||
         of([]);
-    var destroy$ = (config && config.destroy$ && config.destroy$.pipe(catchErr)) || NEVER;
-    var actionFlatten = fop[(options && options.actionFlatOp) || FlattenOperator.concatMap];
-    var stateFlatten = fop[(options && options.stateFlatOp) || FlattenOperator.switchMap];
-    var flattenState$ = function (source) {
-        return source.pipe(stateFlatten(flatCatch), map(mapToObservable), stateFlatten(flatCatch));
-    };
-    var bufferSize = (options && options.bufferSize) || 1;
-    var windowTime = options && options.windowTime;
-    var shareReplayConfig = {
+    const destroy$ = (config && config.destroy$ && config.destroy$.pipe(catchErr)) || NEVER;
+    const actionFlatten = fop[(options && options.actionFlatOp) || FlattenOperator.concatMap];
+    const stateFlatten = fop[(options && options.stateFlatOp) || FlattenOperator.switchMap];
+    const flattenState$ = (source) => source.pipe(stateFlatten(flatCatch), map(mapToObservable), stateFlatten(flatCatch));
+    const bufferSize = (options && options.bufferSize) || 1;
+    const windowTime = options && options.windowTime;
+    const shareReplayConfig = {
         refCount: false,
-        bufferSize: bufferSize,
-        windowTime: windowTime
+        bufferSize,
+        windowTime
     };
     return {
-        reducer$: reducer$,
-        actions$: actions$,
-        actionStream$: actionStream$,
-        initialState$: initialState$,
-        middleware$: middleware$,
-        destroy$: destroy$,
-        flattenState$: flattenState$,
-        shareReplayConfig: shareReplayConfig
+        reducer$,
+        actions$,
+        actionStream$,
+        initialState$,
+        middleware$,
+        destroy$,
+        flattenState$,
+        shareReplayConfig
     };
 }
 
@@ -133,7 +82,7 @@ function getDefaults(config, options) {
  * @type State - application state interface
  * @type ActionsUnion - type union of all the actions
  */
-var Store = /** @class */ (function () {
+class Store {
     /**
      * Default configuration
      *
@@ -154,19 +103,16 @@ var Store = /** @class */ (function () {
      *     bufferSize: 1 //Maximum element count of the replay buffer.
      *  }
      */
-    function Store(config, options) {
+    constructor(config, options) {
         this.config = config;
         this.options = options;
-        var _a = getDefaults(this.config, this.options), reducer$ = _a.reducer$, actions$ = _a.actions$, actionStream$ = _a.actionStream$, middleware$ = _a.middleware$, initialState$ = _a.initialState$, destroy$ = _a.destroy$, flattenState$ = _a.flattenState$, shareReplayConfig = _a.shareReplayConfig;
+        const { reducer$, actions$, actionStream$, middleware$, initialState$, destroy$, flattenState$, shareReplayConfig } = getDefaults(this.config, this.options);
         this.state$ = combineLatest(initialState$, reducer$, middleware$).pipe(map(reducerFactory$), concatMap(actionStream$), startWith(initialState$), flattenState$, takeUntil(destroy$), shareReplay(shareReplayConfig));
         this.state$.subscribe();
         this.actions$ = actions$.pipe(shareReplay(shareReplayConfig));
     }
-    return Store;
-}());
-function createStore(config, opts) {
-    if (config === void 0) { config = {}; }
-    if (opts === void 0) { opts = {}; }
+}
+function createStore(config = {}, opts = {}) {
     return new Store(config, opts);
 }
 
@@ -178,14 +124,14 @@ function createStore(config, opts) {
  * PS - previous state
  * NS - next state
  */
-var mapPS = function (mapFn) { return function (reducer) { return function (state, action) { return reducer(mapFn(state), action); }; }; };
-var mapNS = function (mapFn) { return function (reducer) { return function (state, action) { return mapFn(reducer(state, action)); }; }; };
+const mapPS = (mapFn) => (reducer) => (state, action) => reducer(mapFn(state), action);
+const mapNS = (mapFn) => (reducer) => (state, action) => mapFn(reducer(state, action));
 /**
  *
  * @param mapFn - a function to map an action with
  * @returns {MiddlewareFn} MiddlewareFn<State, ActionsUnion>
  */
-var mapA = function (mapFn) { return function (reducer) { return function (state, action) { return reducer(state, mapFn(action)); }; }; };
+const mapA = (mapFn) => (reducer) => (state, action) => reducer(state, mapFn(action));
 /**
  *
  * @param filterFn - a function to filter a state with
@@ -194,21 +140,21 @@ var mapA = function (mapFn) { return function (reducer) { return function (state
  * PS - previous state
  * NS - next state
  */
-var filterPS = function (filterFn) { return function (reducer) { return function (state, action) {
+const filterPS = (filterFn) => (reducer) => (state, action) => {
     return filterFn(state) ? reducer(state, action) : state;
-}; }; };
-var filterNS = function (filterFn) { return function (reducer) { return function (state, action) {
-    var nextState = reducer(state, action);
+};
+const filterNS = (filterFn) => (reducer) => (state, action) => {
+    const nextState = reducer(state, action);
     return filterFn(nextState) ? nextState : state;
-}; }; };
+};
 /**
  *
  * @param filterFn - a function to filter an action with
  * @returns {MiddlewareFn} MiddlewareFn<State, ActionsUnion>
  */
-var filterA = function (filterFn) { return function (reducer) { return function (state, action) {
+const filterA = (filterFn) => (reducer) => (state, action) => {
     return filterFn(action) ? reducer(state, action) : state;
-}; }; };
+};
 /**
  * Reduce into state
  * @param reduceFn - a function to reduce the state and action together
@@ -217,20 +163,20 @@ var filterA = function (filterFn) { return function (reducer) { return function 
  * PS - previous state
  * NS - next state
  */
-var reducePS = function (reducerFn) { return function (reducer) { return function (state, action) {
+const reducePS = (reducerFn) => (reducer) => (state, action) => {
     return reducer(reducerFn(state, action), action);
-}; }; };
-var reduceNS = function (reducerFn) { return function (reducer) { return function (state, action) {
+};
+const reduceNS = (reducerFn) => (reducer) => (state, action) => {
     return reducerFn(reducer(state, action), action);
-}; }; };
+};
 /**
  *
  * Reduce into action
  * @param reduceFn - a function to reduce the state and action together
  * @returns {MiddlewareFn} MiddlewareFn<State, ActionsUnion>
  */
-var reduceA = function (reducerFn) { return function (reducer) { return function (state, action) {
+const reduceA = (reducerFn) => (reducer) => (state, action) => {
     return reducer(state, reducerFn(state, action));
-}; }; };
+};
 
 export { FlattenOperator, Store, catchErr, createStore, filterA, filterNS, filterPS, mapA, mapNS, mapPS, mapToObservable, reduceA, reduceNS, reducePS };
