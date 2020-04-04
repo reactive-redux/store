@@ -79,7 +79,7 @@ export class Store<State, ActionsUnion extends IAction<any> = any> {
   }
 }
 
-export function createStore<State, ActionsUnion extends IAction>(
+export function createStore<State, ActionsUnion extends IAction = any>(
   config: StoreConfig<State, ActionsUnion> = {},
   opts: StoreOptions = {}
 ) {
