@@ -1,6 +1,6 @@
 export { AsyncType, FlattenOperator, ReducerFn } from './interfaces';
-export { createSelector, select } from './selectors';
-export { Store } from './store';
-export * from './middleware';
+export { Store, createStore } from './store';
 export { mapToObservable, catchErr } from './utils';
+export * from './middleware';
 export * from 'ts-action';
+export * from 'reselect';

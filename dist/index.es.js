@@ -1,7 +1,8 @@
-import { pluck, map, distinctUntilChanged, catchError, scan, filter, tap, share, switchMap, mergeMap, concatMap, exhaustMap, startWith, takeUntil, shareReplay } from 'rxjs/operators';
 import { pipe, of, isObservable, from, Subject, EMPTY, NEVER, combineLatest } from 'rxjs';
+import { catchError, scan, filter, map, tap, share, switchMap, mergeMap, concatMap, exhaustMap, startWith, takeUntil, shareReplay } from 'rxjs/operators';
 import { reducer } from 'ts-action';
 export * from 'ts-action';
+export * from 'reselect';
 
 var FlattenOperator;
 (function (FlattenOperator) {
@@ -47,134 +48,6 @@ function __spread() {
     for (var ar = [], i = 0; i < arguments.length; i++)
         ar = ar.concat(__read(arguments[i]));
     return ar;
-}
-
-function isEqualCheck(a, b) {
-    return a === b;
-}
-function isArgumentsChanged(args, lastArguments, comparator) {
-    for (var i = 0; i < args.length; i++) {
-        if (!comparator(args[i], lastArguments[i])) {
-            return true;
-        }
-    }
-    return false;
-}
-function defaultMemoize(projectionFn, isArgumentsEqual, isResultEqual) {
-    if (isArgumentsEqual === void 0) { isArgumentsEqual = isEqualCheck; }
-    if (isResultEqual === void 0) { isResultEqual = isEqualCheck; }
-    var lastArguments = null;
-    // tslint:disable-next-line:no-any anything could be the result.
-    var lastResult = null;
-    function reset() {
-        lastArguments = null;
-        lastResult = null;
-    }
-    // tslint:disable-next-line:no-any anything could be the result.
-    function memoized() {
-        if (!lastArguments) {
-            lastResult = projectionFn.apply(null, arguments);
-            lastArguments = arguments;
-            return lastResult;
-        }
-        if (!isArgumentsChanged(arguments, lastArguments, isArgumentsEqual)) {
-            return lastResult;
-        }
-        lastArguments = arguments;
-        var newResult = projectionFn.apply(null, arguments);
-        if (isResultEqual(lastResult, newResult)) {
-            return lastResult;
-        }
-        lastResult = newResult;
-        return newResult;
-    }
-    return { memoized: memoized, reset: reset };
-}
-function createSelector() {
-    var input = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        input[_i] = arguments[_i];
-    }
-    return createSelectorFactory(defaultMemoize).apply(void 0, __spread(input));
-}
-function defaultStateFn(state, selectors, props, memoizedProjector) {
-    if (props === undefined) {
-        var args_1 = selectors.map(function (fn) { return fn(state); });
-        return memoizedProjector.memoized.apply(null, args_1);
-    }
-    var args = selectors.map(function (fn) {
-        return fn(state, props);
-    });
-    return memoizedProjector.memoized.apply(null, __spread(args, [props]));
-}
-function createSelectorFactory(memoize, options) {
-    if (options === void 0) { options = {
-        stateFn: defaultStateFn
-    }; }
-    return function () {
-        var input = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            input[_i] = arguments[_i];
-        }
-        var args = input;
-        if (Array.isArray(args[0])) {
-            var _a = __read(args), head = _a[0], tail = _a.slice(1);
-            args = __spread(head, tail);
-        }
-        var selectors = args.slice(0, args.length - 1);
-        var projector = args[args.length - 1];
-        var memoizedSelectors = selectors.filter(function (selector) { return selector.release && typeof selector.release === 'function'; });
-        var memoizedProjector = memoize(function () {
-            var selectors = [];
-            for (var _i = 0; _i < arguments.length; _i++) {
-                selectors[_i] = arguments[_i];
-            }
-            return projector.apply(null, selectors);
-        });
-        var memoizedState = defaultMemoize(function (state, props) {
-            // createSelector works directly on state
-            // e.g. createSelector((state, props) => ...)
-            if (selectors.length === 0 && props !== undefined) {
-                return projector.apply(null, [state, props]);
-            }
-            return options.stateFn.apply(null, [
-                state,
-                selectors,
-                props,
-                memoizedProjector
-            ]);
-        });
-        function release() {
-            memoizedState.reset();
-            memoizedProjector.reset();
-            memoizedSelectors.forEach(function (selector) { return selector.release(); });
-        }
-        return Object.assign(memoizedState.memoized, {
-            release: release,
-            projector: memoizedProjector.memoized
-        });
-    };
-}
-function select(pathOrMapFn, propsOrPath) {
-    var paths = [];
-    for (var _i = 2; _i < arguments.length; _i++) {
-        paths[_i - 2] = arguments[_i];
-    }
-    return function selectOperator(source$) {
-        var mapped$;
-        if (typeof pathOrMapFn === 'string') {
-            var pathSlices = __spread([propsOrPath], paths).filter(Boolean);
-            mapped$ = source$.pipe(pluck.apply(void 0, __spread([pathOrMapFn], pathSlices)));
-        }
-        else if (typeof pathOrMapFn === 'function') {
-            mapped$ = source$.pipe(map(function (source) { return pathOrMapFn(source, propsOrPath); }));
-        }
-        else {
-            throw new TypeError("Unexpected type '" + typeof pathOrMapFn + "' in select operator," +
-                " expected 'string' or 'function'");
-        }
-        return mapped$.pipe(distinctUntilChanged());
-    };
 }
 
 var isObject = function (value) { return value !== null && typeof value === 'object'; };
@@ -291,6 +164,11 @@ var Store = /** @class */ (function () {
     }
     return Store;
 }());
+function createStore(config, opts) {
+    if (config === void 0) { config = {}; }
+    if (opts === void 0) { opts = {}; }
+    return new Store(config, opts);
+}
 
 /**
  *
@@ -355,4 +233,4 @@ var reduceA = function (reducerFn) { return function (reducer) { return function
     return reducer(state, reducerFn(state, action));
 }; }; };
 
-export { FlattenOperator, Store, catchErr, createSelector, filterA, filterNS, filterPS, mapA, mapNS, mapPS, mapToObservable, reduceA, reduceNS, reducePS, select };
+export { FlattenOperator, Store, catchErr, createStore, filterA, filterNS, filterPS, mapA, mapNS, mapPS, mapToObservable, reduceA, reduceNS, reducePS };
