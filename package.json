@@ -17,7 +17,6 @@
     "push:publish": "git push --follow-tags && npm publish",
     "test": "./node_modules/.bin/jest",
     "test:watch": "./node_modules/.bin/jest --watch",
-    "majestic": "./node_modules/.bin/majestic",
     "clean:dist": "rm -rf ./dist"
   },
   "devDependencies": {
