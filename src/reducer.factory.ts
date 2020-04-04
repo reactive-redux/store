@@ -1,6 +1,7 @@
-import { compose } from './utils';
 import { scan } from 'rxjs/operators';
-import { MiddlewareFn, ReducerFn, IAction } from 'src/interfaces';
+
+import { compose } from './utils';
+import { MiddlewareFn, ReducerFn, IAction } from './interfaces';
 
 export function reducerFactory$<State>([
   initialState,

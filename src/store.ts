@@ -21,7 +21,6 @@ import { getDefaults } from './defaults';
 export class Store<State, ActionsUnion extends IAction<any> = any> {
   private _dispatch$ = new Subject<ActionsUnion>();
 
-
   public state$: Observable<State>;
   public actions$: Observable<ActionsUnion>;
 
