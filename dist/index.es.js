@@ -1,4 +1,4 @@
-import { pipe, of, isObservable, from, Subject, EMPTY, NEVER, combineLatest } from 'rxjs';
+import { pipe, of, isObservable, from, Subject, merge, EMPTY, NEVER, combineLatest } from 'rxjs';
 import { catchError, scan, filter, map, tap, share, switchMap, mergeMap, concatMap, exhaustMap, startWith, takeUntil, shareReplay } from 'rxjs/operators';
 
 var FlattenOperator;
@@ -34,19 +34,16 @@ const fop = {
     switchMap,
     mergeMap,
     concatMap,
-    exhaustMap
+    exhaustMap,
 };
-function getDefaults(config = {}, options = {}) {
+function getDefaults(config = {}, options = {}, dispatchSubject) {
     const reducer$ = (config && config.reducer$ && config.reducer$.pipe(catchErr)) ||
         of((state, action) => state);
     const actions$ = new Subject();
-    const actionStream$ = reducer$ => ((config && config.actionStream$ && config.actionStream$.pipe(catchErr)) ||
-        EMPTY).pipe(filter(isObject), map(mapToObservable), actionFlatten(flatCatch), tap(actions$), reducer$, map(mapToObservable));
+    const actionStream$ = reducer$ => merge((config && config.actionStream$ && config.actionStream$.pipe(catchErr)) || EMPTY, dispatchSubject).pipe(filter(isObject), map(mapToObservable), actionFlatten(flatCatch), tap(actions$), reducer$, map(mapToObservable));
     const initialState$ = ((config && config.initialState$ && config.initialState$.pipe(catchErr)) ||
         of({})).pipe(share());
-    const middleware$ = (config &&
-        config.middleware$ &&
-        config.middleware$.pipe(catchErr)) ||
+    const middleware$ = (config && config.middleware$ && config.middleware$.pipe(catchErr)) ||
         of([]);
     const destroy$ = (config && config.destroy$ && config.destroy$.pipe(catchErr)) || NEVER;
     const actionFlatten = fop[(options && options.actionFlatOp) || FlattenOperator.concatMap];
@@ -57,7 +54,7 @@ function getDefaults(config = {}, options = {}) {
     const shareReplayConfig = {
         refCount: false,
         bufferSize,
-        windowTime
+        windowTime,
     };
     return {
         reducer$,
@@ -67,7 +64,7 @@ function getDefaults(config = {}, options = {}) {
         middleware$,
         destroy$,
         flattenState$,
-        shareReplayConfig
+        shareReplayConfig,
     };
 }
 
@@ -103,10 +100,14 @@ class Store {
     constructor(config, options) {
         this.config = config;
         this.options = options;
-        const { reducer$, actions$, actionStream$, middleware$, initialState$, destroy$, flattenState$, shareReplayConfig } = getDefaults(this.config, this.options);
+        this._dispatch$ = new Subject();
+        const { reducer$, actions$, actionStream$, middleware$, initialState$, destroy$, flattenState$, shareReplayConfig } = getDefaults(this.config, this.options, this._dispatch$);
         this.state$ = combineLatest(initialState$, reducer$, middleware$).pipe(map(reducerFactory$), concatMap(actionStream$), startWith(initialState$), flattenState$, takeUntil(destroy$), shareReplay(shareReplayConfig));
         this.state$.subscribe();
         this.actions$ = actions$.pipe(shareReplay(shareReplayConfig));
+    }
+    dispatch(action) {
+        this._dispatch$.next(action);
     }
 }
 function createStore(config = {}, opts = {}) {

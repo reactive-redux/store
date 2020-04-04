@@ -1,6 +1,5 @@
 import { Observable } from 'rxjs';
-import { StoreConfig, StoreOptions } from './interfaces';
-import { Action } from 'ts-action';
+import { StoreConfig, StoreOptions, IAction } from './interfaces';
 /**
  * Reactive state container based on RxJS (https://rxjs.dev/)
  *
@@ -9,9 +8,10 @@ import { Action } from 'ts-action';
  * @type State - application state interface
  * @type ActionsUnion - type union of all the actions
  */
-export declare class Store<State, ActionsUnion extends Action<any> = any> {
+export declare class Store<State, ActionsUnion extends IAction<any> = any> {
     private config?;
     private options?;
+    private _dispatch$;
     state$: Observable<State>;
     actions$: Observable<ActionsUnion>;
     /**
@@ -35,5 +35,6 @@ export declare class Store<State, ActionsUnion extends Action<any> = any> {
      *  }
      */
     constructor(config?: StoreConfig<State, ActionsUnion> | undefined, options?: StoreOptions | undefined);
+    dispatch(action: ActionsUnion): void;
 }
-export declare function createStore<State, ActionsUnion extends Action>(config?: StoreConfig<State, ActionsUnion>, opts?: StoreOptions): Store<State, ActionsUnion>;
+export declare function createStore<State, ActionsUnion extends IAction>(config?: StoreConfig<State, ActionsUnion>, opts?: StoreOptions): Store<State, ActionsUnion>;

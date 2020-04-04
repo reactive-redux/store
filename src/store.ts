@@ -1,4 +1,4 @@
-import { Observable, combineLatest } from 'rxjs';
+import { Observable, combineLatest, Subject } from 'rxjs';
 import {
   startWith,
   shareReplay,
@@ -7,9 +7,8 @@ import {
   map
 } from 'rxjs/operators';
 import { reducerFactory$ } from './reducer.factory';
-import { StoreConfig, StoreOptions } from './interfaces';
+import { StoreConfig, StoreOptions, IAction } from './interfaces';
 import { getDefaults } from './defaults';
-import { Action } from 'ts-action';
 
 /**
  * Reactive state container based on RxJS (https://rxjs.dev/)
@@ -19,7 +18,10 @@ import { Action } from 'ts-action';
  * @type State - application state interface
  * @type ActionsUnion - type union of all the actions
  */
-export class Store<State, ActionsUnion extends Action<any> = any> {
+export class Store<State, ActionsUnion extends IAction<any> = any> {
+  private _dispatch$ = new Subject<ActionsUnion>();
+
+
   public state$: Observable<State>;
   public actions$: Observable<ActionsUnion>;
 
@@ -56,7 +58,7 @@ export class Store<State, ActionsUnion extends Action<any> = any> {
       destroy$,
       flattenState$,
       shareReplayConfig
-    } = getDefaults<State, ActionsUnion>(this.config, this.options);
+    } = getDefaults<State, ActionsUnion>(this.config, this.options, this._dispatch$);
 
     this.state$ = combineLatest(initialState$, reducer$, middleware$).pipe(
       map(reducerFactory$),
@@ -71,9 +73,13 @@ export class Store<State, ActionsUnion extends Action<any> = any> {
 
     this.actions$ = actions$.pipe<ActionsUnion>(shareReplay(shareReplayConfig));
   }
+
+  dispatch(action: ActionsUnion) {
+    this._dispatch$.next(action);
+  }
 }
 
-export function createStore<State, ActionsUnion extends Action>(
+export function createStore<State, ActionsUnion extends IAction>(
   config: StoreConfig<State, ActionsUnion> = {},
   opts: StoreOptions = {}
 ) {

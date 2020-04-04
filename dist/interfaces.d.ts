@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
-export declare type IAction = {
+export declare type IAction<T = any> = {
     type: string;
-    payload?: any;
+    payload?: T;
 };
 export declare enum FlattenOperator {
     switchMap = "switchMap",
