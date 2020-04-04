@@ -7,5 +7,3 @@ export declare const catchErr: import("rxjs").UnaryFunction<Observable<unknown>,
 export declare const flatCatch: <T>(o: Observable<T>) => Observable<T>;
 export declare const mapToObservable: <T>(value: AsyncType<T>) => Observable<T>;
 export declare function ofType<T extends IAction>(...allowedTypes: string[]): OperatorFunction<IAction, T>;
-export declare const lowercaze: (str: string) => string;
-export declare const capitalize: (str: string) => string;

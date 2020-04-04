@@ -4,8 +4,7 @@ import {
   shareReplay,
   takeUntil,
   concatMap,
-  map,
-  tap
+  map
 } from 'rxjs/operators';
 import { reducerFactory$ } from './reducer.factory';
 import { StoreConfig, StoreOptions } from './interfaces';
