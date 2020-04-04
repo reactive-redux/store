@@ -35,6 +35,6 @@ export declare class Store<State, ActionsUnion extends IAction<any> = any> {
      *  }
      */
     constructor(config?: StoreConfig<State, ActionsUnion> | undefined, options?: StoreOptions | undefined);
-    dispatch(action: ActionsUnion): void;
+    dispatch: (action: ActionsUnion) => void;
 }
 export declare function createStore<State, ActionsUnion extends IAction = any>(config?: StoreConfig<State, ActionsUnion>, opts?: StoreOptions): Store<State, ActionsUnion>;

@@ -74,7 +74,7 @@ export class Store<State, ActionsUnion extends IAction<any> = any> {
     this.actions$ = actions$.pipe<ActionsUnion>(shareReplay(shareReplayConfig));
   }
 
-  dispatch(action: ActionsUnion) {
+  dispatch = (action: ActionsUnion) => {
     this._dispatch$.next(action);
   }
 }

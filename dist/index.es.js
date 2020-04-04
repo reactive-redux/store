@@ -103,13 +103,13 @@ class Store {
         this.config = config;
         this.options = options;
         this._dispatch$ = new Subject();
+        this.dispatch = (action) => {
+            this._dispatch$.next(action);
+        };
         const { reducer$, actions$, actionStream$, middleware$, initialState$, destroy$, flattenState$, shareReplayConfig } = getDefaults(this.config, this.options, this._dispatch$);
         this.state$ = combineLatest(initialState$, reducer$, middleware$).pipe(map(reducerFactory$), concatMap(actionStream$), startWith(initialState$), flattenState$, takeUntil(destroy$), shareReplay(shareReplayConfig));
         this.state$.subscribe();
         this.actions$ = actions$.pipe(shareReplay(shareReplayConfig));
-    }
-    dispatch(action) {
-        this._dispatch$.next(action);
     }
 }
 function createStore(config = {}, opts = {}) {
