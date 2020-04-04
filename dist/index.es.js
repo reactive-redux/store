@@ -1,5 +1,7 @@
 import { pipe, of, isObservable, from, Subject, merge, EMPTY, NEVER, combineLatest } from 'rxjs';
 import { catchError, scan, filter, map, tap, share, switchMap, mergeMap, concatMap, exhaustMap, startWith, takeUntil, shareReplay } from 'rxjs/operators';
+export * from 'ts-action';
+export * from 'reselect';
 
 var FlattenOperator;
 (function (FlattenOperator) {

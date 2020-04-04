@@ -32,7 +32,9 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "rxjs": "^6.5.5"
+    "reselect": "^4.0.0",
+    "rxjs": "^6.5.5",
+    "ts-action": "^11.0.0"
   },
   "keywords": [
     "rxjs",
