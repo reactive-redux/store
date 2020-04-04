@@ -4,7 +4,9 @@ import {
   FlattenOperator,
   StoreConfig,
   StoreOptions,
-  Middleware
+  Middleware,
+  IAction,
+  ReducerFn
 } from './interfaces';
 import { catchErr, flatCatch, mapToObservable, isObject } from './utils';
 import {
@@ -18,7 +20,6 @@ import {
   tap
 } from 'rxjs/operators';
 import { ShareReplayConfig } from 'rxjs/internal/operators/shareReplay';
-import { reducer, Action, Reducer } from 'ts-action';
 
 const fop: { [key in FlattenOperator]: any } = {
   switchMap,
@@ -27,13 +28,13 @@ const fop: { [key in FlattenOperator]: any } = {
   exhaustMap
 };
 
-export function getDefaults<State, ActionsUnion extends Action>(
+export function getDefaults<State, ActionsUnion extends IAction>(
   config: StoreConfig<State, ActionsUnion> = {},
   options: StoreOptions = {}
 ) {
   const reducer$ =
-    (config && config.reducer$ && config.reducer$.pipe<Reducer<State>>(catchErr)) ||
-    of<Reducer<State>>(reducer<State>({} as State));
+    (config && config.reducer$ && config.reducer$.pipe<ReducerFn<State, ActionsUnion>>(catchErr)) ||
+    of<ReducerFn<State, ActionsUnion>>((state, action) => state);
 
   const actions$ = new Subject<ActionsUnion>();
 

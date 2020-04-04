@@ -1,14 +1,13 @@
 import { compose } from './utils';
 import { scan } from 'rxjs/operators';
-import { Reducer, Action } from 'ts-action';
-import { MiddlewareFn } from 'src/interfaces';
+import { MiddlewareFn, ReducerFn, IAction } from 'src/interfaces';
 
 export function reducerFactory$<State>([
   initialState,
   reducer,
   middleware,
-]: [State, Reducer<State>, MiddlewareFn<State, any>[]]) {
-  function _reducer(state: State, action: Action): State {
+]: [State, ReducerFn<State, any>, MiddlewareFn<State, any>[]]) {
+  function _reducer(state: State, action: IAction): State {
     return middleware.length > 0
       ? compose(middleware)(reducer)(state, action)
       : reducer(state, action);

@@ -4,7 +4,7 @@
 
 ## Install
 
-#### `npm i @reactive-redux/store`
+#### `npm i rxjs ts-action reselect @reactive-redux/store`
 
 ## Example
 
@@ -14,37 +14,38 @@ import { map, take } from 'rxjs/operators';
 import {
   createStore
 } from '@reactive-redux/store';
+import { action, on, payload, reducer } from "ts-action";
 
-//Counter example
-type State = number;
- 
-class Increment extends Action {}
- 
-class Decrement extends Action {}
- 
-type ActionsUnion = Increment | Decrement;
- 
 const actionQ = new Subject<AsyncType<ActionsUnion>>();
- 
-const initialState = 0;
- 
-const increment = (state: State, action: Increment) => state + 1;
- 
-const decrement = (state: State, action: Decrement) => state - 1;
- 
+
+const increment = action("Increment", payload<{ value: number }>());
+const decrement = action("Decrement", payload<{ value: number }>());
+
+interface State {
+  value: number;
+  }
+
+const initialState: State = {
+  value: 0;
+};
+
 const initialState$ = of(initialState);
 const actionStream$ = actionQ.asObservable();
-const reducers$ = of([increment, decrement]);
- 
+const reducer$ = of(reducer(
+  initialState,
+  on(increment, (state, { payload }) => ({ value: state.value + payload.value })),
+  on(decrement, (state, { payload }) => ({ value: state.value - payload.value }))
+));
+
 const { state$ } = createStore<State, ActionsUnion>({
   actionStream$,
-  reducers$,
+  reducer$,
   initialState$
 });
 
 state$.subscribe(console.log);
  
-const add1 = new Increment();
+const add1 = increment({ value: 1 });
  
 const add1times = n => interval(200).pipe(
   map(() => add1),

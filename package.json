@@ -21,10 +21,8 @@
     "clean:dist": "rm -rf ./dist"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^7.1.1",
     "@types/jest": "^25.2.1",
     "jest": "^25.2.7",
-    "majestic": "1.6.0",
     "nodemon": "^2.0.2",
     "rollup": "1.16.7",
     "rollup-plugin-terser": "5.2.0",
@@ -34,9 +32,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "reselect": "^4.0.0",
-    "rxjs": "^6.5.5",
-    "ts-action": "^11.0.0"
+    "rxjs": "^6.5.5"
   },
   "keywords": [
     "rxjs",
