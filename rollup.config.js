@@ -25,5 +25,5 @@ export default {
       }
     })
   ],
-  external: ['rxjs', 'ts-action']
+  external: ['rxjs']
 };

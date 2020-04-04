@@ -1,8 +1,8 @@
+export { createSelector, createSelectorCreator, createStructuredSelector, defaultMemoize } from 'reselect';
 import { pipe, of, isObservable, from, Subject, EMPTY, NEVER, combineLatest } from 'rxjs';
 import { catchError, scan, filter, map, tap, share, switchMap, mergeMap, concatMap, exhaustMap, startWith, takeUntil, shareReplay } from 'rxjs/operators';
 import { reducer } from 'ts-action';
 export * from 'ts-action';
-export * from 'reselect';
 
 var FlattenOperator;
 (function (FlattenOperator) {
