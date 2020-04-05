@@ -9,8 +9,9 @@ export default {
       format: 'es'
     },
     {
+      name: 'store',
       file: `./dist/index.min.js`,
-      format: 'cjs'
+      format: 'umd'
     }
   ],
   plugins: [
