@@ -18,7 +18,7 @@ import { getDefaults } from './defaults';
  * @type State - application state interface
  * @type ActionsUnion - type union of all the actions
  */
-export class Store<State, ActionsUnion extends IAction<any> = any> {
+export class Store<State = {}, ActionsUnion extends IAction<any> = any> {
   private _dispatch$ = new Subject<ActionsUnion>();
 
   public state$: Observable<State>;
@@ -78,7 +78,7 @@ export class Store<State, ActionsUnion extends IAction<any> = any> {
   }
 }
 
-export function createStore<State, ActionsUnion extends IAction = any>(
+export function createStore<State = {}, ActionsUnion extends IAction = any>(
   config: StoreConfig<State, ActionsUnion> = {},
   opts: StoreOptions = {}
 ) {
