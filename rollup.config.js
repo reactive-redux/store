@@ -9,9 +9,8 @@ export default {
       format: 'es'
     },
     {
-      name: 'store',
       file: `./dist/index.min.js`,
-      format: 'umd'
+      format: 'cjs'
     }
   ],
   plugins: [
@@ -19,12 +18,12 @@ export default {
       typescript: require('typescript'),
       tsconfig: 'tsconfig.build.json'
     }),
-    terser({
-      include: [/^.+\.min\.js$/],
-      output: {
-        comments: 'all'
-      }
-    })
+    // terser({
+    //   include: [/^.+\.min\.js$/],
+    //   output: {
+    //     comments: 'all'
+    //   }
+    // })
   ],
   external: ['rxjs', 'rxjs/operators', 'ts-action', 'reselect']
 };
