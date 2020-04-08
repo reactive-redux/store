@@ -1,5 +1,4 @@
 import { Observable } from 'rxjs';
-import { Action } from 'ts-action';
 
 export enum FlattenOperator {
   switchMap = 'switchMap',
@@ -8,7 +7,7 @@ export enum FlattenOperator {
   exhaustMap = 'exhaustMap'
 }
 
-export interface StoreConfig<State, ActionUnion extends Action> {
+export interface StoreConfig<State, ActionUnion> {
   reducer$?: Observable<ReducerFn<State, ActionUnion>>;
   actionStream$?: Observable<ActionUnion>;
   initialState$?: Observable<State>;
@@ -25,10 +24,10 @@ export interface StoreOptions {
 
 export type AsyncType<T> = T | Promise<T> | Observable<T>;
 
-export type ReducerFn<State, A extends Action> = (state: State, action: A) => State;
+export type ReducerFn<State, A> = (state: State, action: A) => State;
 
-export type MiddlewareFn<State, A extends Action> = (
+export type MiddlewareFn<State, A> = (
   reducer: ReducerFn<State, A>
 ) => ReducerFn<State, A>;
 
-export type Middleware<T, A extends Action> = MiddlewareFn<T, A>[];
+export type Middleware<T, A> = MiddlewareFn<T, A>[];

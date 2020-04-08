@@ -12,7 +12,7 @@ const fop: { [key in FlattenOperator]: any } = {
   exhaustMap,
 };
 
-export function getDefaults<State, ActionsUnion extends Action>(
+export function getDefaults<State, ActionsUnion>(
   config: StoreConfig<State, ActionsUnion> = {},
   options: StoreOptions = {},
   dispatchSubject: Subject<ActionsUnion>

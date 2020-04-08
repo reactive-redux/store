@@ -9,7 +9,7 @@ import { Action } from 'ts-action';
  * @type State - application state interface
  * @type ActionsUnion - type union of all the actions
  */
-export declare class Store<State = {}, ActionsUnion extends Action<any> = any> {
+export declare class Store<State = {}, ActionsUnion = any> {
     private config?;
     private options?;
     private _dispatch$;
