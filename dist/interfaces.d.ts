@@ -1,15 +1,12 @@
 import { Observable } from 'rxjs';
-export declare type IAction<T = any> = {
-    type: string;
-    payload?: T;
-};
+import { Action } from 'ts-action';
 export declare enum FlattenOperator {
     switchMap = "switchMap",
     mergeMap = "mergeMap",
     concatMap = "concatMap",
     exhaustMap = "exhaustMap"
 }
-export interface StoreConfig<State, ActionUnion extends IAction> {
+export interface StoreConfig<State, ActionUnion extends Action> {
     reducer$?: Observable<ReducerFn<State, ActionUnion>>;
     actionStream$?: Observable<ActionUnion>;
     initialState$?: Observable<State>;
@@ -23,6 +20,6 @@ export interface StoreOptions {
     windowTime?: number;
 }
 export declare type AsyncType<T> = T | Promise<T> | Observable<T>;
-export declare type ReducerFn<State, A extends IAction> = (state: State, action: A) => State;
-export declare type MiddlewareFn<State, A extends IAction> = (reducer: ReducerFn<State, A>) => ReducerFn<State, A>;
-export declare type Middleware<T, A extends IAction> = MiddlewareFn<T, A>[];
+export declare type ReducerFn<State, A extends Action> = (state: State, action: A) => State;
+export declare type MiddlewareFn<State, A extends Action> = (reducer: ReducerFn<State, A>) => ReducerFn<State, A>;
+export declare type Middleware<T, A extends Action> = MiddlewareFn<T, A>[];

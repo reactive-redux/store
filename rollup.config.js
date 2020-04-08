@@ -18,12 +18,11 @@ export default {
       typescript: require('typescript'),
       tsconfig: 'tsconfig.build.json'
     }),
-    // terser({
-    //   include: [/^.+\.min\.js$/],
-    //   output: {
-    //     comments: 'all'
-    //   }
-    // })
-  ],
-  external: ['rxjs', 'rxjs/operators', 'ts-action', 'reselect']
+    terser({
+      include: [/^.+\.min\.js$/],
+      output: {
+        comments: 'all'
+      }
+    })
+  ]
 };

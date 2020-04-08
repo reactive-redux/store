@@ -177,14 +177,14 @@ function createStore(config, opts) {
  * PS - previous state
  * NS - next state
  */
-var mapPS = function (mapFn) { return function (reducer) { return function (state, IAction) { return reducer(mapFn(state), IAction); }; }; };
-var mapNS = function (mapFn) { return function (reducer) { return function (state, IAction) { return mapFn(reducer(state, IAction)); }; }; };
+var mapPS = function (mapFn) { return function (reducer) { return function (state, Action) { return reducer(mapFn(state), Action); }; }; };
+var mapNS = function (mapFn) { return function (reducer) { return function (state, Action) { return mapFn(reducer(state, Action)); }; }; };
 /**
  *
- * @param mapFn - a function to map an IAction with
+ * @param mapFn - a function to map an Action with
  * @returns {MiddlewareFn} MiddlewareFn<State, IActionsUnion>
  */
-var mapA = function (mapFn) { return function (reducer) { return function (state, IAction) { return reducer(state, mapFn(IAction)); }; }; };
+var mapA = function (mapFn) { return function (reducer) { return function (state, Action) { return reducer(state, mapFn(Action)); }; }; };
 /**
  *
  * @param filterFn - a function to filter a state with
@@ -193,43 +193,43 @@ var mapA = function (mapFn) { return function (reducer) { return function (state
  * PS - previous state
  * NS - next state
  */
-var filterPS = function (filterFn) { return function (reducer) { return function (state, IAction) {
-    return filterFn(state) ? reducer(state, IAction) : state;
+var filterPS = function (filterFn) { return function (reducer) { return function (state, Action) {
+    return filterFn(state) ? reducer(state, Action) : state;
 }; }; };
-var filterNS = function (filterFn) { return function (reducer) { return function (state, IAction) {
-    var nextState = reducer(state, IAction);
+var filterNS = function (filterFn) { return function (reducer) { return function (state, Action) {
+    var nextState = reducer(state, Action);
     return filterFn(nextState) ? nextState : state;
 }; }; };
 /**
  *
- * @param filterFn - a function to filter an IAction with
+ * @param filterFn - a function to filter an Action with
  * @returns {MiddlewareFn} MiddlewareFn<State, IActionsUnion>
  */
-var filterA = function (filterFn) { return function (reducer) { return function (state, IAction) {
-    return filterFn(IAction) ? reducer(state, IAction) : state;
+var filterA = function (filterFn) { return function (reducer) { return function (state, Action) {
+    return filterFn(Action) ? reducer(state, Action) : state;
 }; }; };
 /**
  * Reduce into state
- * @param reduceFn - a function to reduce the state and IAction together
+ * @param reduceFn - a function to reduce the state and Action together
  * @returns {MiddlewareFn} MiddlewareFn<State, IActionsUnion>
  *
  * PS - previous state
  * NS - next state
  */
-var reducePS = function (reducerFn) { return function (reducer) { return function (state, IAction) {
-    return reducer(reducerFn(state, IAction), IAction);
+var reducePS = function (reducerFn) { return function (reducer) { return function (state, Action) {
+    return reducer(reducerFn(state, Action), Action);
 }; }; };
-var reduceNS = function (reducerFn) { return function (reducer) { return function (state, IAction) {
-    return reducerFn(reducer(state, IAction), IAction);
+var reduceNS = function (reducerFn) { return function (reducer) { return function (state, Action) {
+    return reducerFn(reducer(state, Action), Action);
 }; }; };
 /**
  *
- * Reduce into IAction
- * @param reduceFn - a function to reduce the state and IAction together
+ * Reduce into Action
+ * @param reduceFn - a function to reduce the state and Action together
  * @returns {MiddlewareFn} MiddlewareFn<State, IActionsUnion>
  */
-var reduceA = function (reducerFn) { return function (reducer) { return function (state, IAction) {
-    return reducer(state, reducerFn(state, IAction));
+var reduceA = function (reducerFn) { return function (reducer) { return function (state, Action) {
+    return reducer(state, reducerFn(state, Action));
 }; }; };
 
-export { FlattenOperator, Store, catchErr, createStore, filterA, filterNS, filterPS, mapA, mapNS, mapPS, mapToObservable, reduceA, reduceNS, reducePS };
+export { FlattenOperator, Store, catchErr, createStore, filterA, filterNS, filterPS, flatCatch, mapA, mapNS, mapPS, mapToObservable, reduceA, reduceNS, reducePS };

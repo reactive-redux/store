@@ -1,6 +1,6 @@
 import { Observable, of, EMPTY, NEVER, OperatorFunction, Subject, merge } from 'rxjs';
-
-import { FlattenOperator, StoreConfig, StoreOptions, Middleware, IAction, ReducerFn } from './interfaces';
+import { Action } from 'ts-action';
+import { FlattenOperator, StoreConfig, StoreOptions, Middleware, ReducerFn } from './interfaces';
 import { catchErr, flatCatch, mapToObservable, isObject } from './utils';
 import { switchMap, mergeMap, concatMap, exhaustMap, map, share, filter, tap } from 'rxjs/operators';
 import { ShareReplayConfig } from 'rxjs/internal/operators/shareReplay';
@@ -12,7 +12,7 @@ const fop: { [key in FlattenOperator]: any } = {
   exhaustMap,
 };
 
-export function getDefaults<State, ActionsUnion extends IAction>(
+export function getDefaults<State, ActionsUnion extends Action>(
   config: StoreConfig<State, ActionsUnion> = {},
   options: StoreOptions = {},
   dispatchSubject: Subject<ActionsUnion>

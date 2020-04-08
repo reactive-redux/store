@@ -1,9 +1,6 @@
-import { pipe, from, of, isObservable, Observable, OperatorFunction } from 'rxjs';
-import { catchError, filter } from 'rxjs/operators';
-import {
-  AsyncType,
-  IAction,
-} from './interfaces';
+import { pipe, from, of, isObservable, Observable } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { AsyncType } from './interfaces';
 
 export const isObject = (value: any) => value !== null && typeof value === 'object';
 
@@ -20,11 +17,3 @@ export const mapToObservable = <T>(value: AsyncType<T>): Observable<T> => {
   if (value instanceof Promise) return from(value);
   return of(value);
 };
-
-export function ofType<T extends IAction>(
-  ...allowedTypes: string[]
-): OperatorFunction<IAction, T> {
-  return filter(
-    (action: IAction): action is T => allowedTypes.some(type => type === action.type)
-  );
-}
