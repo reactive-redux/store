@@ -1,4 +1,6 @@
-export { AsyncType, FlattenOperator, StoreConfig, StoreOptions } from './interfaces';
+export { AsyncType, FlattenOperator, StoreConfig, StoreOptions, } from './interfaces';
 export { Store, createStore } from './store';
-export { mapToObservable, catchErr, flatCatch } from './utils';
+export { connectReduxDevTools, withDevToolsTimeTravel, normalizeDevToolsConfig, DevToolsConfig, DevToolsOptions, DEVTOOLS_JUMP_TO_STATE, } from './devtools';
+export { mapToObservable, catchErr, flatCatch, combineReducers } from './utils';
 export * from './middleware';
+export * from './effects';

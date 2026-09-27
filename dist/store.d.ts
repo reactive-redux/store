@@ -35,7 +35,7 @@ export declare class Store<State = {}, ActionsUnion = any> {
      *     bufferSize: 1 //Maximum element count of the replay buffer.
      *  }
      */
-    constructor(config?: StoreConfig<State, ActionsUnion> | undefined, options?: StoreOptions | undefined);
+    constructor(config?: StoreConfig<State, ActionsUnion>, options?: StoreOptions);
     dispatch: (action: ActionsUnion) => void;
 }
 export declare function createStore<State = {}, ActionsUnion extends Action = any>(config?: StoreConfig<State, ActionsUnion>, opts?: StoreOptions): Store<State, ActionsUnion>;

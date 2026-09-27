@@ -1,9 +1,7 @@
 import { Observable, of, EMPTY, NEVER, OperatorFunction, Subject, merge } from 'rxjs';
-import { Action } from 'ts-action';
 import { FlattenOperator, StoreConfig, StoreOptions, Middleware, ReducerFn } from './interfaces';
 import { catchErr, flatCatch, mapToObservable, isObject } from './utils';
-import { switchMap, mergeMap, concatMap, exhaustMap, map, share, filter, tap } from 'rxjs/operators';
-import { ShareReplayConfig } from 'rxjs/internal/operators/shareReplay';
+import { ShareReplayConfig, switchMap, mergeMap, concatMap, exhaustMap, map, share, filter, tap } from 'rxjs/operators';
 
 const fop: { [key in FlattenOperator]: any } = {
   switchMap,
@@ -42,7 +40,7 @@ export function getDefaults<State, ActionsUnion>(
     (config && config.middleware$ && config.middleware$.pipe<Middleware<State, ActionsUnion>>(catchErr)) ||
     of<Middleware<State, ActionsUnion>>([]);
 
-  const destroy$: Observable<boolean> = (config && config.destroy$ && config.destroy$.pipe(catchErr)) || NEVER;
+  const destroy$: Observable<boolean> = (config?.destroy$?.pipe(catchErr)) || NEVER;
 
   const actionFlatten: any = fop[(options && options.actionFlatOp) || FlattenOperator.concatMap];
 

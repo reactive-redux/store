@@ -1,4 +1,4 @@
-import { ReducerFn, MiddlewareFn } from './interfaces';
+import { ReducerFn } from './interfaces';
 import { Action } from 'ts-action';
 
 /**

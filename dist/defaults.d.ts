@@ -1,7 +1,7 @@
 import { Observable, OperatorFunction, Subject } from 'rxjs';
 import { StoreConfig, StoreOptions, Middleware, ReducerFn } from './interfaces';
-import { ShareReplayConfig } from 'rxjs/internal/operators/shareReplay';
-export declare function getDefaults<State, ActionsUnion>(config: StoreConfig<State, ActionsUnion> | undefined, options: StoreOptions | undefined, dispatchSubject: Subject<ActionsUnion>): {
+import { ShareReplayConfig } from 'rxjs/operators';
+export declare function getDefaults<State, ActionsUnion>(config: StoreConfig<State, ActionsUnion>, options: StoreOptions, dispatchSubject: Subject<ActionsUnion>): {
     reducer$: Observable<ReducerFn<State, ActionsUnion>>;
     actions$: Subject<ActionsUnion>;
     actionStream$: (reducer: OperatorFunction<any, State>) => Observable<any>;
